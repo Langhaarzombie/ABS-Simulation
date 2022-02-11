@@ -1,15 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.constants as const
-from scipy.stats import maxwell
-from src.sphere import Sphere
+import matplotlib.animation as animation
+import src.simulation as simulation
 
 config = {
+    "save_file": "abs_simulation.csv",
     "window_size": 100,
-    "sphere_count": 100,
-    "simulation_steps": 1000,
-    "simulation_stepsize": 1,
-    "sphere_mass": 1e-12,
+    "sphere_count": 10,
+    "simulation_timestep": 5,
+    "simulation_steps": 10,
+    "simulation_animation_interval": 200,
+    "sphere_mass": 1e-19,
     "temperature": 350
 }
 
@@ -22,22 +23,12 @@ def run():
     print("Running Simulation...")
 
     # Create spheres
-    spheres = np.array([])
-    for _ in np.arange(config["sphere_count"]):
-        s = Sphere()
-
-        # Distribute sphere in space
-        loc_gen = np.random.rand(2)
-        s.location = loc_gen * config["window_size"]
-
-        # Assign velocity with Maxwell Boltzmann distribution
-        scale = np.sqrt(const.k * config["temperature"] / config["sphere_mass"])
-        vel_gen = maxwell.rvs(size=3, scale=scale)
-        s.velocity = vel_gen
-
-        print(s.__dict__)
-        spheres = np.append(spheres, s)
-
+    spheres = simulation.initialize(window_size=config["window_size"], count=config["sphere_count"], mass=config["sphere_mass"], temperature=config["temperature"])
+    # Simulate system
+    dt = config["simulation_timestep"]
+    with open(config["save_file"], "w") as file:
+        for _ in np.arange(config["simulation_steps"]):
+            spheres = simulation.step(spheres, config["window_size"], dt, file)
 
 def show():
     """
@@ -45,15 +36,35 @@ def show():
 
     Show the animated simulation of generated data files.
     """
+    data = np.loadtxt(config["save_file"])
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(111, projection="3d")
-    ax.set_xlim([0, config["window_size"]])
-    ax.set_ylim([0, config["window_size"]])
-    ax.set_zlim([0, config["window_size"]])
 
-    ax.scatter([0, 1, 2], [0, 1, 2], [0, 1, 2])
+    anim = animation.FuncAnimation(fig, _iterate_file, fargs=[data, ax], frames=int(len(data)/config["sphere_count"]), interval=config["simulation_animation_interval"])
 
     plt.show()
+
+def _iterate_file(i, data, plot):
+    """
+    Animation Function for Matplotlib FuncAnimation.
+
+    Create scatterplot for given simulation step.
+
+    Parameters
+    ----------
+    i: int
+        Simulation step.
+    data: numpy.ndarray of numpy.ndarray of int
+        Coordinates of spheres.
+    plot: matplotlib.plot.figure
+        Figure object for plotting.
+    """
+    offset = config["sphere_count"] * i
+    plot.clear()
+    plot.set_xlim([0, config["window_size"]])
+    plot.set_ylim([0, config["window_size"]])
+    plot.set_zlim([0, config["window_size"]])
+    plot.scatter(data[offset:offset + config["sphere_count"], 0], data[offset:offset + config["sphere_count"], 1], data[offset:offset + config["sphere_count"], 2])
 
 if __name__ == "__main__":
     run()
