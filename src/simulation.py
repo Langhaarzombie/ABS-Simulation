@@ -3,11 +3,14 @@ import scipy.constants as const
 from scipy.stats import maxwell
 from src.sphere import Sphere
 
-def initialize(window_size, count, mass, temperature):
+def initialize(window_size, count, temperature, dt):
     """
     Initialize spheres for simulation.
 
     Create an array of spheres to be used in the simulation.
+    Spheres are put in the window without overlap and are assigned
+    a random velocity so that the total velocity is zero. The
+    given temperature defines the velocity scaling.
 
     Parameters
     ----------
@@ -15,30 +18,48 @@ def initialize(window_size, count, mass, temperature):
         Size of observed window, restricts location of spheres.
     count: int
         Number of spheres to be created.
-    mass: int
-        Mass of spheres used in velocity distribution.
     temperature:
         Temperature of the simulated system.
+    dt: int
+        Size of timestep in simulation.
 
     Returns
     -------
     numpy.array of Sphere
         Array of ABS for simulation.
     """
+    # Create lattice
+    dl = np.ceil(window_size / np.cbrt(count))
+    li = np.arange(window_size, step=dl)
+    x, y, z = np.meshgrid(li, li, li)
+    x = np.reshape(x, [-1, 1])
+    y = np.reshape(y, [-1, 1])
+    z = np.reshape(z, [-1, 1])
+    lattice = np.concatenate((x, y, z), axis=1)
+
+    # Generate spheres
     spheres = np.array([])
-    for _ in np.arange(count):
+    mean_vel = np.zeros(3)
+    mean_vel2 = 0
+    for i in np.arange(count):
         s = Sphere(window_size)
+        # Put sphere on lattice
+        s.location = lattice[i]
+        # Assign random velocity
+        s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
 
-        # Distribute sphere in space
-        loc_gen = np.random.rand(3)
-        s.location = loc_gen * window_size
-
-        # Assign velocity with Maxwell Boltzmann distribution
-        scale = np.sqrt(const.k * temperature / mass)
-        vel_gen = maxwell.rvs(size=3, scale=scale)
-        s.velocity = vel_gen
+        mean_vel += s.velocity/count     # mean total velocity
+        mean_vel2 += np.inner(s.velocity, s.velocity)/count # mean velocity squared
 
         spheres = np.append(spheres, s)
+
+    temp_fac = np.sqrt(3*temperature/mean_vel2)
+    for s in spheres:
+        # Correct velocity for total vel = 0 and desired temperature
+        s.velocity = (s.velocity - mean_vel) * temp_fac
+        # Move sphere to previous timestep position
+        s.location = s.location - s.velocity*dt
+
     return spheres
 
 def step(spheres, boundary, dt, file):

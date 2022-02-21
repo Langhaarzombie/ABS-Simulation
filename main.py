@@ -7,11 +7,10 @@ config = {
     "save_file": "abs_simulation.csv",
     "window_size": 100,
     "sphere_count": 10,
-    "simulation_timestep": 5,
+    "simulation_timestep": 1,
     "simulation_steps": 10,
-    "simulation_animation_interval": 200,
-    "sphere_mass": 1e-19,
-    "temperature": 350
+    "simulation_animation_interval": 500,
+    "temperature": 50
 }
 
 def run():
@@ -20,11 +19,8 @@ def run():
 
     Run through the default simulation to generate data files.
     """
-    print("Running Simulation...")
+    spheres = simulation.initialize(window_size=config["window_size"], count=config["sphere_count"], temperature=config["temperature"], dt=config["simulation_timestep"])
 
-    # Create spheres
-    spheres = simulation.initialize(window_size=config["window_size"], count=config["sphere_count"], mass=config["sphere_mass"], temperature=config["temperature"])
-    # Simulate system
     dt = config["simulation_timestep"]
     with open(config["save_file"], "w") as file:
         for _ in np.arange(config["simulation_steps"]):
