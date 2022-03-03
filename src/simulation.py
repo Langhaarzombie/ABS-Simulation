@@ -90,6 +90,7 @@ def step(spheres, boundary, sigma, epsilon, dt, file):
         Updated array of ABS for simulation.
     """
     diameter = boundary*np.sqrt(2)
+    cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     for i in np.arange(len(spheres)):
         s1 = spheres[i]
         # Loop over unique pairs
@@ -98,15 +99,15 @@ def step(spheres, boundary, sigma, epsilon, dt, file):
             dist = s1.location - s2.location
             dist = dist - np.rint(dist/diameter) # periodic bonudaries
             r = np.inner(dist, dist)
-            if r < (2**(1/6)*sigma)**2: # Cutoff distance for potential
+            if r < cut_off:
                 # Calculate acting force
                 force = 4*epsilon * ((sigma**12/r**6) - (sigma**6/r**3)) + epsilon
                 direction = dist / np.linalg.norm(dist)
                 s1.force += force * direction
                 s2.force -= force * direction
-    # Verlet for updation locations
+    # Verlet for updating locations
     for s in spheres:
-        s.update_sphere(2*s.location - s.old_location + s.force * dt**2, dt)
+        s.update(2*s.location - s.old_location + s.force * dt**2, dt)
         s.force = np.zeros(3)
         print(f"{s}", end="\n", file=file)
     return spheres

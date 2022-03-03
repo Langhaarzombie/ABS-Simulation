@@ -22,7 +22,7 @@ class Sphere:
         self.velocity = np.zeros(3)
         self.force = np.zeros(3)
 
-    def update_sphere(self, new_location, dt):
+    def update(self, new_location, dt):
         """
         Update sphere with new location.
 
@@ -67,32 +67,16 @@ class Sphere:
 
         self._location = np.array([x, y, z])
 
-    @property
-    def old_location(self):
-        return self._old_location
-
-    @old_location.setter
-    def old_location(self, value):
+    def kinetic_energy(self):
         """
-        Set the old location of sphere in window.
+        Get kinetic energy of sphere.
 
-        Store the old location of the sphere inside the
-        given window (defined by config). If the given
-        coordinates are out of bounds of the window size,
-        the sphere enters from the other side of the window
-        (periodic boundary).
-
-        Parameters:
-        -----------
-        value: numpy.ndarray of int
-            3d coordinates of old location.
+        Returns:
+        --------
+        float
+            Kinetic energy of the sphere.
         """
-        x, y, z = value
-        x = self._correct_boundary(x)
-        y = self._correct_boundary(y)
-        z = self._correct_boundary(z)
-
-        self._old_location = np.array([x, y, z])
+        return 0.5*np.inner(self.velocity, self.velocity)
 
     def _correct_boundary(self, coord):
         """
@@ -117,5 +101,5 @@ class Sphere:
 
 
     def __str__(self):
-        return str(f"""{self.location[0]}\t{self.location[1]}\t{self.location[2]}\t{self.velocity[0]}\t{self.velocity[1]}\t{self.velocity[2]}""")
+        return str(f"""{self.location[0]}\t{self.location[1]}\t{self.location[2]}\t{self.velocity[0]}\t{self.velocity[1]}\t{self.velocity[2]}\t{self.kinetic_energy()}""")
 

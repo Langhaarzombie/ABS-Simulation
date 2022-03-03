@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -5,11 +6,11 @@ import src.simulation as simulation
 
 config = {
     "save_file": "abs_simulation.csv",
-    "window_size": 100,
+    "window_size": 50,
     "sphere_count": 100,
     "simulation_timestep": 0.01,
-    "simulation_steps": 1000,
-    "simulation_animation_interval": 10,
+    "simulation_steps": 100,
+    "simulation_animation_interval": 40,
     "temperature": 50,
     "sigma": 7.5,
     "epsilon": 2
@@ -66,14 +67,20 @@ def _iterate_file(i, data, plot):
     xs = data[offset:offset + config["sphere_count"], 0]
     ys = data[offset:offset + config["sphere_count"], 1]
     zs = data[offset:offset + config["sphere_count"], 2]
-    vels = data[offset:offset + config["sphere_count"], 3:6]
+    ens = data[offset:offset + config["sphere_count"], 6]
 
+    max_en = np.max(ens)
     colors = np.array([])
-    for vel in vels:
-        colors = np.append(colors, np.inner(vel, vel))
+    for e in ens:
+        colors = np.append(colors, e/max_en)
 
-    plot.scatter(xs, ys, zs, c=colors)
+    plot.scatter(xs, ys, zs, c=colors, cmap="coolwarm")
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--show", dest="mode", action="store_const", const="show", default="run_show", help="show existing data (default: generate and show new data)")
+    args = vars(parser.parse_args())
+
+    if args["mode"] == "run_show":
+        run()
     show()
