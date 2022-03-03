@@ -20,7 +20,7 @@ def initialize(window_size, count, temperature, dt):
         Number of spheres to be created.
     temperature:
         Temperature of the simulated system.
-    dt: int
+    dt: float
         Size of timestep in simulation.
 
     Returns
@@ -57,12 +57,12 @@ def initialize(window_size, count, temperature, dt):
     for s in spheres:
         # Correct velocity for total vel = 0 and desired temperature
         s.velocity = (s.velocity - mean_vel) * temp_fac
-        # Move sphere to previous timestep position
-        s.location = s.location - s.velocity*dt
+        # Estimate old location
+        s.old_location = s.location - s.velocity*dt
 
     return spheres
 
-def step(spheres, boundary, dt, file):
+def step(spheres, boundary, sigma, epsilon, dt, file):
     """
     Calculate and save simulation step.
 
@@ -75,7 +75,11 @@ def step(spheres, boundary, dt, file):
         Array of ABS for simulation
     boundary: int
         Size of observed window.
-    dt: int
+    sigma: float64
+        Sigma in the potential.
+    epsilon: float64
+        Epsilon in the potential.
+    dt: float
         Size of timestep.
     file: _io.TextIOWrapper
         Already openend save file.
@@ -85,8 +89,25 @@ def step(spheres, boundary, dt, file):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
+    diameter = boundary*np.sqrt(2)
+    for i in np.arange(len(spheres)):
+        s1 = spheres[i]
+        # Loop over unique pairs
+        for j in np.arange(i+1, len(spheres)):
+            s2 = spheres[j]
+            dist = s1.location - s2.location
+            dist = dist - np.rint(dist/diameter) # periodic bonudaries
+            r = np.inner(dist, dist)
+            if r < (2**(1/6)*sigma)**2: # Cutoff distance for potential
+                # Calculate acting force
+                force = 4*epsilon * ((sigma**12/r**6) - (sigma**6/r**3)) + epsilon
+                direction = dist / np.linalg.norm(dist)
+                s1.force += force * direction
+                s2.force -= force * direction
+    # Verlet for updation locations
     for s in spheres:
-        s.location = s.location + dt * s.velocity
-        print(f"{s.location[0]}\t{s.location[1]}\t{s.location[2]}", end="\n", file=file)
+        s.update_sphere(2*s.location - s.old_location + s.force * dt**2, dt)
+        s.force = np.zeros(3)
+        print(f"{s}", end="\n", file=file)
     return spheres
 

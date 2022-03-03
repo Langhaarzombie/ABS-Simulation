@@ -6,11 +6,13 @@ import src.simulation as simulation
 config = {
     "save_file": "abs_simulation.csv",
     "window_size": 100,
-    "sphere_count": 10,
-    "simulation_timestep": 1,
-    "simulation_steps": 10,
-    "simulation_animation_interval": 500,
-    "temperature": 50
+    "sphere_count": 100,
+    "simulation_timestep": 0.01,
+    "simulation_steps": 1000,
+    "simulation_animation_interval": 10,
+    "temperature": 50,
+    "sigma": 7.5,
+    "epsilon": 2
 }
 
 def run():
@@ -23,8 +25,8 @@ def run():
 
     dt = config["simulation_timestep"]
     with open(config["save_file"], "w") as file:
-        for _ in np.arange(config["simulation_steps"]):
-            spheres = simulation.step(spheres, config["window_size"], dt, file)
+        for i in np.arange(config["simulation_steps"]):
+            spheres = simulation.step(spheres, config["window_size"], config["sigma"], config["epsilon"], dt, file)
 
 def show():
     """
@@ -60,7 +62,17 @@ def _iterate_file(i, data, plot):
     plot.set_xlim([0, config["window_size"]])
     plot.set_ylim([0, config["window_size"]])
     plot.set_zlim([0, config["window_size"]])
-    plot.scatter(data[offset:offset + config["sphere_count"], 0], data[offset:offset + config["sphere_count"], 1], data[offset:offset + config["sphere_count"], 2])
+
+    xs = data[offset:offset + config["sphere_count"], 0]
+    ys = data[offset:offset + config["sphere_count"], 1]
+    zs = data[offset:offset + config["sphere_count"], 2]
+    vels = data[offset:offset + config["sphere_count"], 3:6]
+
+    colors = np.array([])
+    for vel in vels:
+        colors = np.append(colors, np.inner(vel, vel))
+
+    plot.scatter(xs, ys, zs, c=colors)
 
 if __name__ == "__main__":
     run()
