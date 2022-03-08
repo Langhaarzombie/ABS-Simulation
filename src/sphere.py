@@ -36,7 +36,8 @@ class Sphere:
         dt: float
             Timestep size.
         """
-        self.velocity = (new_location - self.old_location)/(2*dt)
+        dist = (new_location - self.old_location)
+        self.velocity = (dist - self.window_size * np.rint(dist/self.window_size))/(2*dt)
         self.old_location = self.location
         self.location = new_location
 
@@ -66,6 +67,33 @@ class Sphere:
         z = self._correct_boundary(z)
 
         self._location = np.array([x, y, z])
+
+    @property
+    def old_location(self):
+        return self._old_location
+
+    @old_location.setter
+    def old_location(self, value):
+        """
+        Set old location of sphere in window.
+
+        Store the old location of the sphere inside the
+        given window (defined by config). If the given
+        coordinates are out of bounds of the window size,
+        the sphere enters from the other side of the window
+        (periodic boundary).
+
+        Parameters:
+        -----------
+        value: numpy.ndarray of int
+            3d coordinates of old location.
+        """
+        x, y, z = value
+        x = self._correct_boundary(x)
+        y = self._correct_boundary(y)
+        z = self._correct_boundary(z)
+
+        self._old_location = np.array([x, y, z])
 
     def kinetic_energy(self):
         """

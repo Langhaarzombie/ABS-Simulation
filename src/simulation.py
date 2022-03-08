@@ -29,7 +29,7 @@ def initialize(window_size, count, temperature, dt):
         Array of ABS for simulation.
     """
     # Create lattice
-    dl = np.ceil(window_size / np.cbrt(count))
+    dl = np.round(window_size / np.cbrt(count))
     li = np.arange(window_size, step=dl)
     x, y, z = np.meshgrid(li, li, li)
     x = np.reshape(x, [-1, 1])
@@ -62,7 +62,7 @@ def initialize(window_size, count, temperature, dt):
 
     return spheres
 
-def step(spheres, boundary, sigma, epsilon, dt, file):
+def step(spheres, boundary, sigma, dt, file):
     """
     Calculate and save simulation step.
 
@@ -77,8 +77,6 @@ def step(spheres, boundary, sigma, epsilon, dt, file):
         Size of observed window.
     sigma: float64
         Sigma in the potential.
-    epsilon: float64
-        Epsilon in the potential.
     dt: float
         Size of timestep.
     file: _io.TextIOWrapper
@@ -89,7 +87,7 @@ def step(spheres, boundary, sigma, epsilon, dt, file):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
-    diameter = boundary*np.sqrt(2)
+    diam = boundary*np.sqrt(2)
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     for i in np.arange(len(spheres)):
         s1 = spheres[i]
@@ -97,14 +95,16 @@ def step(spheres, boundary, sigma, epsilon, dt, file):
         for j in np.arange(i+1, len(spheres)):
             s2 = spheres[j]
             dist = s1.location - s2.location
-            dist = dist - np.rint(dist/diameter) # periodic bonudaries
+            dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
             r = np.inner(dist, dist)
             if r < cut_off:
-                # Calculate acting force
-                force = 4*epsilon * ((sigma**12/r**6) - (sigma**6/r**3)) + epsilon
-                direction = dist / np.linalg.norm(dist)
-                s1.force += force * direction
-                s2.force -= force * direction
+                if r < cut_off / 8: print("WARNING!")
+                # Calculate acting force, Lennard Jones potential
+                r2 = 1/r
+                r6 = r2**3
+                force = 48*r2*r6*(r6-0.5)
+                s1.force += force * dist
+                s2.force -= force * dist
     # Verlet for updating locations
     for s in spheres:
         s.update(2*s.location - s.old_location + s.force * dt**2, dt)

@@ -6,14 +6,13 @@ import src.simulation as simulation
 
 config = {
     "save_file": "abs_simulation.csv",
-    "window_size": 50,
+    "window_size": 5,
     "sphere_count": 100,
-    "simulation_timestep": 0.01,
-    "simulation_steps": 100,
+    "simulation_timestep": 0.0001,
+    "simulation_steps": 2000,
     "simulation_animation_interval": 40,
-    "temperature": 50,
-    "sigma": 7.5,
-    "epsilon": 2
+    "temperature": 300,
+    "sigma": 1,
 }
 
 def run():
@@ -27,7 +26,7 @@ def run():
     dt = config["simulation_timestep"]
     with open(config["save_file"], "w") as file:
         for i in np.arange(config["simulation_steps"]):
-            spheres = simulation.step(spheres, config["window_size"], config["sigma"], config["epsilon"], dt, file)
+            spheres = simulation.step(spheres, config["window_size"], config["sigma"], dt, file)
 
 def show():
     """
@@ -73,6 +72,9 @@ def _iterate_file(i, data, plot):
     colors = np.array([])
     for e in ens:
         colors = np.append(colors, e/max_en)
+
+    su = np.sum(ens)
+    print(su)
 
     plot.scatter(xs, ys, zs, c=colors, cmap="coolwarm")
 
