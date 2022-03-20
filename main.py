@@ -3,14 +3,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import src.simulation as simulation
+import src.numba_ext
 
 config = {
     "save_file": "abs_simulation.csv",
-    "window_size": 5,
-    "sphere_count": 100,
-    "simulation_timestep": 0.0001,
-    "simulation_steps": 2000,
+    "window_size": 3,
+    "sphere_count": 5,
+    "simulation_timestep": 0.000005,
+    "simulation_steps": 100000,
     "simulation_animation_interval": 40,
+    "simulation_animation_skip": 100,
     "temperature": 300,
     "sigma": 1,
 }
@@ -35,10 +37,21 @@ def show():
     Show the animated simulation of generated data files.
     """
     data = np.loadtxt(config["save_file"])
-    fig = plt.figure(figsize=(5, 5))
-    ax = fig.add_subplot(111, projection="3d")
+    fig = plt.figure(figsize=(10, 5))
+    ax_anim = fig.add_subplot(121, projection="3d")
+    ax2 = fig.add_subplot(222)
+    ax3 = fig.add_subplot(224)
 
-    anim = animation.FuncAnimation(fig, _iterate_file, fargs=[data, ax], frames=int(len(data)/config["sphere_count"]), interval=config["simulation_animation_interval"])
+    anim = animation.FuncAnimation(fig, _iterate_file, fargs=[data, ax_anim], frames=int(len(data)/(config["sphere_count"]*config["simulation_animation_skip"])), interval=config["simulation_animation_interval"])
+
+    ax2.set_title("Total Kinetic Energy")
+    exs, eys = _plot_energy(data)
+    ax2.get_xaxis().set_visible(False)
+    ax2.plot(exs, eys)
+
+    ax3.set_title("Total Momentum")
+    mxs, mys = _plot_momentum(data)
+    ax3.plot(mxs, mys)
 
     plt.show()
 
@@ -53,11 +66,11 @@ def _iterate_file(i, data, plot):
     i: int
         Simulation step.
     data: numpy.ndarray of numpy.ndarray of int
-        Coordinates of spheres.
+        List of spheres.
     plot: matplotlib.plot.figure
         Figure object for plotting.
     """
-    offset = config["sphere_count"] * i
+    offset = config["simulation_animation_skip"] * config["sphere_count"] * i
     plot.clear()
     plot.set_xlim([0, config["window_size"]])
     plot.set_ylim([0, config["window_size"]])
@@ -73,10 +86,52 @@ def _iterate_file(i, data, plot):
     for e in ens:
         colors = np.append(colors, e/max_en)
 
-    su = np.sum(ens)
-    print(su)
+    # Print simulation step index to compare simulation and plot data
+    print(offset / config["sphere_count"])
 
     plot.scatter(xs, ys, zs, c=colors, cmap="coolwarm")
+
+def _plot_energy(data):
+    """
+    Plot the total kinetic energy during simulation.
+
+    Sum over all kinetic energies of spheres and plot them.
+    The kinetic energy shows how much the system is in
+    motion.
+
+    Parameters:
+    -----------
+    data: numpy.ndarray of numpy.ndarray of int
+        List of spheres.
+    """
+    energy_x = np.arange(int(len(data)/config["sphere_count"]))
+    energy_y = np.array([])
+    for i in energy_x:
+        istart = config["sphere_count"] * i
+        energy_y = np.append(energy_y, np.sum(data[istart:istart + config["sphere_count"], 6]))
+
+    return energy_x, energy_y
+
+def _plot_momentum(data):
+    """
+    Plot the total momentum energy during simulation.
+
+    Sum over all velocities of spheres and plot them.
+    The total momentum should change as little as possible.
+
+    Parameters:
+    -----------
+    data: numpy.ndarray of numpy.ndarray of int
+        List of spheres.
+    """
+    mom_x = np.arange(int(len(data)/config["sphere_count"]))
+    mom_y = np.array([])
+    for i in mom_x:
+        istart = config["sphere_count"] * i
+        mom_y = np.append(mom_y, np.sum(data[istart:istart + config["sphere_count"], 3:5]))
+
+    return mom_x, mom_y
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

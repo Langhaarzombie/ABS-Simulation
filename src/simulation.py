@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.constants as const
-from scipy.stats import maxwell
 from src.sphere import Sphere
 
 def initialize(window_size, count, temperature, dt):
@@ -62,6 +61,27 @@ def initialize(window_size, count, temperature, dt):
 
     return spheres
 
+def forces(spheres, boundary, sigma, dt):
+    diam = boundary*np.sqrt(2)
+    cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
+    s6 = sigma**6
+    for i in np.arange(len(spheres)):
+        s1 = spheres[i]
+        # Loop over unique pairs
+        for j in np.arange(i+1, len(spheres)):
+            s2 = spheres[j]
+            dist = s1.location - s2.location
+            dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
+            r = np.inner(dist, dist)
+            if r < cut_off:
+                # Calculate acting force, Lennard Jones potential
+                r2 = 1/r
+                r6 = r2**3
+                force = 48*r2*r6*s6*(r6*s6-0.5)
+                s1.force += force * dist
+                s2.force -= force * dist
+    return spheres
+
 def step(spheres, boundary, sigma, dt, file):
     """
     Calculate and save simulation step.
@@ -87,28 +107,11 @@ def step(spheres, boundary, sigma, dt, file):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
-    diam = boundary*np.sqrt(2)
-    cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
-    for i in np.arange(len(spheres)):
-        s1 = spheres[i]
-        # Loop over unique pairs
-        for j in np.arange(i+1, len(spheres)):
-            s2 = spheres[j]
-            dist = s1.location - s2.location
-            dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
-            r = np.inner(dist, dist)
-            if r < cut_off:
-                if r < cut_off / 8: print("WARNING!")
-                # Calculate acting force, Lennard Jones potential
-                r2 = 1/r
-                r6 = r2**3
-                force = 48*r2*r6*(r6-0.5)
-                s1.force += force * dist
-                s2.force -= force * dist
+    spheres = forces(spheres, boundary, sigma, dt)
     # Verlet for updating locations
     for s in spheres:
         s.update(2*s.location - s.old_location + s.force * dt**2, dt)
-        s.force = np.zeros(3)
         print(f"{s}", end="\n", file=file)
+        s.force = np.zeros(3)
     return spheres
 
