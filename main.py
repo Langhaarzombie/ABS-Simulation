@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import src.simulation as simulation
-import src.numba_ext
 
 config = {
     "save_file": "abs_simulation.csv",
