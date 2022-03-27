@@ -65,6 +65,7 @@ def forces(spheres, boundary, sigma, dt):
     diam = boundary*np.sqrt(2)
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
+    ecut = 4*s6*(s6**2/cut_off**6 - 1/cut_off**3)
     for i in np.arange(len(spheres)):
         s1 = spheres[i]
         # Loop over unique pairs
@@ -72,14 +73,16 @@ def forces(spheres, boundary, sigma, dt):
             s2 = spheres[j]
             dist = s1.location - s2.location
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
-            r = np.inner(dist, dist)
-            if r < cut_off:
+            r2 = np.inner(dist, dist)
+            if r2 < cut_off:
                 # Calculate acting force, Lennard Jones potential
-                r2 = 1/r
-                r6 = r2**3
-                force = 48*r2*r6*s6*(r6*s6-0.5)
+                r2d = 1/r2
+                r6d = r2d**3
+                force = 48*r2d*r6d*s6*(r6d*s6-0.5)
                 s1.force += force * dist
                 s2.force -= force * dist
+                s1.potential_energy += 2*r6d*s6*(r6d*s6-1) - ecut
+                s2.potential_energy += 2*r6d*s6*(r6d*s6-1) - ecut
     return spheres
 
 def step(spheres, boundary, sigma, dt, file):
@@ -113,5 +116,6 @@ def step(spheres, boundary, sigma, dt, file):
         s.update(2*s.location - s.old_location + s.force * dt**2, dt)
         print(f"{s}", end="\n", file=file)
         s.force = np.zeros(3)
+        s.potential_energy = 0
     return spheres
 

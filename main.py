@@ -7,11 +7,11 @@ import src.simulation as simulation
 config = {
     "save_file": "abs_simulation.csv",
     "window_size": 3,
-    "sphere_count": 5,
-    "simulation_timestep": 0.000005,
-    "simulation_steps": 100000,
+    "sphere_count": 10,
+    "simulation_timestep": 0.0004,
+    "simulation_steps": 1000,
     "simulation_animation_interval": 40,
-    "simulation_animation_skip": 100,
+    "simulation_animation_skip": 3,
     "temperature": 300,
     "sigma": 1,
 }
@@ -43,10 +43,13 @@ def show():
 
     anim = animation.FuncAnimation(fig, _iterate_file, fargs=[data, ax_anim], frames=int(len(data)/(config["sphere_count"]*config["simulation_animation_skip"])), interval=config["simulation_animation_interval"])
 
-    ax2.set_title("Total Kinetic Energy")
-    exs, eys = _plot_energy(data)
+    ax2.set_title("Energy")
+    exs, epotys, ekinys, etotys = _plot_energy(data)
     ax2.get_xaxis().set_visible(False)
-    ax2.plot(exs, eys)
+    ax2.plot(exs, epotys, label="Potential")
+    ax2.plot(exs, ekinys, label="Kinetic")
+    ax2.plot(exs, etotys, label="Total")
+    ax2.legend()
 
     ax3.set_title("Total Momentum")
     mxs, mys = _plot_momentum(data)
@@ -78,38 +81,32 @@ def _iterate_file(i, data, plot):
     xs = data[offset:offset + config["sphere_count"], 0]
     ys = data[offset:offset + config["sphere_count"], 1]
     zs = data[offset:offset + config["sphere_count"], 2]
-    ens = data[offset:offset + config["sphere_count"], 6]
-
-    max_en = np.max(ens)
-    colors = np.array([])
-    for e in ens:
-        colors = np.append(colors, e/max_en)
 
     # Print simulation step index to compare simulation and plot data
     print(offset / config["sphere_count"])
 
-    plot.scatter(xs, ys, zs, c=colors, cmap="coolwarm")
+    plot.scatter(xs, ys, zs)
 
 def _plot_energy(data):
     """
-    Plot the total kinetic energy during simulation.
+    Calculate total, kinetic and potential energy during simulation for plot.
 
-    Sum over all kinetic energies of spheres and plot them.
-    The kinetic energy shows how much the system is in
-    motion.
+    Create the plot data to check energy conservation and stability of the system.
 
     Parameters:
     -----------
     data: numpy.ndarray of numpy.ndarray of int
         List of spheres.
     """
-    energy_x = np.arange(int(len(data)/config["sphere_count"]))
-    energy_y = np.array([])
-    for i in energy_x:
+    xs = np.arange(int(len(data)/config["sphere_count"]))
+    potential_y = np.array([])
+    kinetic_y = np.array([])
+    for i in xs:
         istart = config["sphere_count"] * i
-        energy_y = np.append(energy_y, np.sum(data[istart:istart + config["sphere_count"], 6]))
+        potential_y = np.append(potential_y, np.sum(data[istart:istart + config["sphere_count"], 6]))
+        kinetic_y = np.append(kinetic_y, np.sum(data[istart:istart + config["sphere_count"], 7]))
 
-    return energy_x, energy_y
+    return xs, potential_y, kinetic_y, kinetic_y + potential_y
 
 def _plot_momentum(data):
     """

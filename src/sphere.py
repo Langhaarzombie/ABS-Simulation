@@ -21,6 +21,7 @@ class Sphere:
         self.old_location  = np.zeros(3)
         self.velocity = np.zeros(3)
         self.force = np.zeros(3)
+        self.potential_energy = 0
 
     def update(self, new_location, dt):
         """
@@ -99,6 +100,8 @@ class Sphere:
         """
         Get kinetic energy of sphere.
 
+        Returns half of of velocity squared.
+
         Returns:
         --------
         float
@@ -129,5 +132,5 @@ class Sphere:
 
 
     def __str__(self):
-        return str(f"""{self.location[0]}\t{self.location[1]}\t{self.location[2]}\t{self.velocity[0]}\t{self.velocity[1]}\t{self.velocity[2]}\t{self.kinetic_energy()}""")
+        return str(f"""{self.location[0]}\t{self.location[1]}\t{self.location[2]}\t{self.velocity[0]}\t{self.velocity[1]}\t{self.velocity[2]}\t{self.potential_energy}\t{self.kinetic_energy()}""")
 
