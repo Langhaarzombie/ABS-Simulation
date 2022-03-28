@@ -7,7 +7,7 @@ import src.simulation as simulation
 config = {
     "save_file": "abs_simulation.csv",
     "window_size": 3,
-    "sphere_count": 10,
+    "sphere_count": 9,
     "simulation_timestep": 0.0004,
     "simulation_steps": 1000,
     "simulation_animation_interval": 40,
@@ -83,7 +83,7 @@ def _iterate_file(i, data, plot):
     zs = data[offset:offset + config["sphere_count"], 2]
 
     # Print simulation step index to compare simulation and plot data
-    print(offset / config["sphere_count"])
+    #  print(offset / config["sphere_count"])
 
     plot.scatter(xs, ys, zs)
 
@@ -117,16 +117,15 @@ def _plot_momentum(data):
 
     Parameters:
     -----------
-    data: numpy.ndarray of numpy.ndarray of int
-        List of spheres.
+    data: 2d numpy.ndarray of float64
+        CSV data of simulation.
     """
-    mom_x = np.arange(int(len(data)/config["sphere_count"]))
-    mom_y = np.array([])
-    for i in mom_x:
+    t = np.arange(int(len(data)/config["sphere_count"]))
+    totall_momenta = np.array([])
+    for i in t:
         istart = config["sphere_count"] * i
-        mom_y = np.append(mom_y, np.sum(data[istart:istart + config["sphere_count"], 3:5]))
-
-    return mom_x, mom_y
+        totall_momenta = np.append(totall_momenta, np.sum(data[istart:istart + config["sphere_count"], 3:6]))
+    return t, totall_momenta
 
 
 if __name__ == "__main__":

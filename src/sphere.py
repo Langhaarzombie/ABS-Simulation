@@ -14,26 +14,29 @@ class Sphere:
         x, y, z coordinates.
     velocity: numpy.ndarray of int
         Velocity in x, y, z direction.
+    potential_energy: float64
+        Potential energy of sphere.
     """
     def __init__(self, window_size):
         self.window_size = window_size
         self.location = np.zeros(3)
         self.old_location  = np.zeros(3)
         self.velocity = np.zeros(3)
-        self.force = np.zeros(3)
         self.potential_energy = 0
 
-    def update(self, new_location, dt):
+    def update(self, new_location, potential_energy, dt):
         """
-        Update sphere with new location.
+        Update sphere with new location and potential_energy.
 
         Simultaneously update location, old_location and
-        velocity of a sphere.
+        velocity of a sphere. Assign potential energy property.
 
         Parameters:
         -----------
         new_location: numpy.ndarray of int
             x, y, z coordinates of new location.
+        potential_energy: float64
+            Potential energy of sphere.
         dt: float
             Timestep size.
         """
@@ -41,6 +44,7 @@ class Sphere:
         self.velocity = (dist - self.window_size * np.rint(dist/self.window_size))/(2*dt)
         self.old_location = self.location
         self.location = new_location
+        self.potential_energy = potential_energy
 
     @property
     def location(self):

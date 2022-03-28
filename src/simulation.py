@@ -19,7 +19,7 @@ def initialize(window_size, count, temperature, dt):
         Number of spheres to be created.
     temperature:
         Temperature of the simulated system.
-    dt: float
+    dt: float32
         Size of timestep in simulation.
 
     Returns
@@ -61,17 +61,44 @@ def initialize(window_size, count, temperature, dt):
 
     return spheres
 
-def forces(spheres, boundary, sigma, dt):
+def calculate_forces(locations, boundary, sigma, dt):
+    """
+    Calculate forces and potential energy for spheres at locations.
+
+    Calculate forces acting on sphere at location and potential energy.
+
+    Parameters:
+    -----------
+    locations: numpy.array of float64
+        Locations of spheres.
+    boundary: int
+        Size of simulation window.
+    sigma: float32
+        Sigma for potential.
+    dt: float32
+        Size of timestep in simulation.
+
+    Returns:
+    --------
+    forces: 2d numpy.array of float64
+        Forces acting on spheres.
+    pot_ens: numpy.array of float64
+        Potential energies of spheres.
+    """
+    forces = np.empty_like(locations)
+    pot_ens = np.zeros(len(locations))
+
     diam = boundary*np.sqrt(2)
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
     ecut = 4*s6*(s6**2/cut_off**6 - 1/cut_off**3)
-    for i in np.arange(len(spheres)):
-        s1 = spheres[i]
+
+    for i in np.arange(len(locations)):
+        s1 = locations[i]
         # Loop over unique pairs
-        for j in np.arange(i+1, len(spheres)):
-            s2 = spheres[j]
-            dist = s1.location - s2.location
+        for j in np.arange(i+1, len(locations)):
+            s2 = locations[j]
+            dist = s1 - s2
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
             r2 = np.inner(dist, dist)
             if r2 < cut_off:
@@ -79,11 +106,11 @@ def forces(spheres, boundary, sigma, dt):
                 r2d = 1/r2
                 r6d = r2d**3
                 force = 48*r2d*r6d*s6*(r6d*s6-0.5)
-                s1.force += force * dist
-                s2.force -= force * dist
-                s1.potential_energy += 2*r6d*s6*(r6d*s6-1) - ecut
-                s2.potential_energy += 2*r6d*s6*(r6d*s6-1) - ecut
-    return spheres
+                forces[i] += force * dist
+                forces[j] -= force * dist
+                pot_ens[i] += 2*r6d*s6*(r6d*s6-1) - ecut
+                pot_ens[j] += 2*r6d*s6*(r6d*s6-1) - ecut
+    return forces, pot_ens
 
 def step(spheres, boundary, sigma, dt, file):
     """
@@ -95,12 +122,12 @@ def step(spheres, boundary, sigma, dt, file):
     Parameters
     ----------
     spheres: numpy.array of Sphere
-        Array of ABS for simulation
+        Array of ABS for simulation.
     boundary: int
         Size of observed window.
-    sigma: float64
+    sigma: float32
         Sigma in the potential.
-    dt: float
+    dt: float32
         Size of timestep.
     file: _io.TextIOWrapper
         Already openend save file.
@@ -110,12 +137,33 @@ def step(spheres, boundary, sigma, dt, file):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
-    spheres = forces(spheres, boundary, sigma, dt)
+    locs = _get_locations(spheres)
+    fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
     # Verlet for updating locations
-    for s in spheres:
-        s.update(2*s.location - s.old_location + s.force * dt**2, dt)
+    for i in np.arange(len(spheres)):
+        s = spheres[i]
+        new_location = 2*s.location - s.old_location + fs[i] * dt**2
+        s.update(new_location, pot_ens[i], dt)
         print(f"{s}", end="\n", file=file)
-        s.force = np.zeros(3)
-        s.potential_energy = 0
     return spheres
+
+def _get_locations(spheres):
+    """
+    Get list of locations from list of spheres.
+
+    Extracts location information from spheres and gives list of pure floats.
+
+    Parameters
+    ----------
+    spheres: numpy.array of Sphere
+        Array of ABS for simulation.
+    Returns:
+    --------
+    numpy.array of float64
+        Array of locations of ABSs.
+    """
+    loc = np.empty((0, 3), float)
+    for s in spheres:
+        loc = np.append(loc, [s.location], axis=0)
+    return loc
 
