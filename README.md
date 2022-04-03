@@ -23,8 +23,6 @@ Located in `main.py` there is a config variable that contains necessary configur
 - `sphere_count`: number of spheres to simulate
 - `simulation_timestep`: size of one timestep in the simulation
 - `simulation_steps`: how many timesteps are calculated
-- `simulation_animation_interval`: refreshrate of animation
-- `simulation_animation_skip`: `1` to show every timeframe, `2` to show every second, ...
 - `temperature`: init value to define velocities of spheres
 - `sigma`: used in LJ potential, also defines interaction range
 
