@@ -8,10 +8,8 @@ config = {
     "save_file": "abs_simulation.csv",
     "window_size": 3,
     "sphere_count": 9,
-    "simulation_timestep": 0.0004,
+    "simulation_timestep": 0.0005,
     "simulation_steps": 1000,
-    "simulation_animation_interval": 40,
-    "simulation_animation_skip": 3,
     "temperature": 300,
     "sigma": 1,
 }
@@ -37,11 +35,8 @@ def show():
     """
     data = np.loadtxt(config["save_file"])
     fig = plt.figure(figsize=(10, 5))
-    ax_anim = fig.add_subplot(121, projection="3d")
-    ax2 = fig.add_subplot(222)
-    ax3 = fig.add_subplot(224)
-
-    anim = animation.FuncAnimation(fig, _iterate_file, fargs=[data, ax_anim], frames=int(len(data)/(config["sphere_count"]*config["simulation_animation_skip"])), interval=config["simulation_animation_interval"])
+    ax2 = fig.add_subplot(211)
+    ax3 = fig.add_subplot(212)
 
     ax2.set_title("Energy")
     exs, epotys, ekinys, etotys = _plot_energy(data)
@@ -52,40 +47,13 @@ def show():
     ax2.legend()
 
     ax3.set_title("Total Momentum")
-    mxs, mys = _plot_momentum(data)
-    ax3.plot(mxs, mys)
+    mts, mxs, mys, mzs = _plot_momentum(data)
+    ax3.plot(mts, mxs, label="X")
+    ax3.plot(mts, mys, label="Y")
+    ax3.plot(mts, mzs, label="Z")
+    ax3.legend()
 
     plt.show()
-
-def _iterate_file(i, data, plot):
-    """
-    Animation Function for Matplotlib FuncAnimation.
-
-    Create scatterplot for given simulation step.
-
-    Parameters
-    ----------
-    i: int
-        Simulation step.
-    data: numpy.ndarray of numpy.ndarray of int
-        List of spheres.
-    plot: matplotlib.plot.figure
-        Figure object for plotting.
-    """
-    offset = config["simulation_animation_skip"] * config["sphere_count"] * i
-    plot.clear()
-    plot.set_xlim([0, config["window_size"]])
-    plot.set_ylim([0, config["window_size"]])
-    plot.set_zlim([0, config["window_size"]])
-
-    xs = data[offset:offset + config["sphere_count"], 0]
-    ys = data[offset:offset + config["sphere_count"], 1]
-    zs = data[offset:offset + config["sphere_count"], 2]
-
-    # Print simulation step index to compare simulation and plot data
-    #  print(offset / config["sphere_count"])
-
-    plot.scatter(xs, ys, zs)
 
 def _plot_energy(data):
     """
@@ -98,34 +66,52 @@ def _plot_energy(data):
     data: numpy.ndarray of numpy.ndarray of int
         List of spheres.
     """
-    xs = np.arange(int(len(data)/config["sphere_count"]))
-    potential_y = np.array([])
-    kinetic_y = np.array([])
-    for i in xs:
+    ts = np.arange(int(len(data)/config["sphere_count"]))
+    potential = np.array([])
+    kinetic = np.array([])
+    for i in ts:
         istart = config["sphere_count"] * i
-        potential_y = np.append(potential_y, np.sum(data[istart:istart + config["sphere_count"], 6]))
-        kinetic_y = np.append(kinetic_y, np.sum(data[istart:istart + config["sphere_count"], 7]))
+        potential = np.append(potential, np.sum(data[istart:istart + config["sphere_count"], 6]))
+        kinetic = np.append(kinetic, np.sum(data[istart:istart + config["sphere_count"], 7]))
 
-    return xs, potential_y, kinetic_y, kinetic_y + potential_y
+    total_energy = kinetic + potential
+
+    print(f"(std / mean) of total energy: {np.std(total_energy) / np.mean(total_energy)}")
+
+    return ts, potential, kinetic, total_energy
 
 def _plot_momentum(data):
     """
-    Plot the total momentum energy during simulation.
+    Get momenta behaviour over time.
 
-    Sum over all velocities of spheres and plot them.
-    The total momentum should change as little as possible.
+    Gives the time and momenta of center of mass in x, y, z direction
+    over time of simulation.
 
     Parameters:
     -----------
     data: 2d numpy.ndarray of float64
         CSV data of simulation.
+    Returns:
+    --------
+    ts: numpy.array of int
+        Timesteps in simulation.
+    momentum_x: numpy.array of float64
+        Momentum of center of mass in x direction.
+    momentum_y: numpy.array of float64
+        Momentum of center of mass in y direction.
+    momentum_z: numpy.array of float64
+        Momentum of center of mass in z direction.
     """
-    t = np.arange(int(len(data)/config["sphere_count"]))
-    totall_momenta = np.array([])
-    for i in t:
+    ts = np.arange(int(len(data)/config["sphere_count"]))
+    momentum_x = np.array([])
+    momentum_y = np.array([])
+    momentum_z = np.array([])
+    for i in ts:
         istart = config["sphere_count"] * i
-        totall_momenta = np.append(totall_momenta, np.sum(data[istart:istart + config["sphere_count"], 3:6]))
-    return t, totall_momenta
+        momentum_x = np.append(momentum_x, np.sum(data[istart:istart + config["sphere_count"], 3]))
+        momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["sphere_count"], 4]))
+        momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["sphere_count"], 5]))
+    return ts, momentum_x, momentum_y, momentum_z
 
 
 if __name__ == "__main__":

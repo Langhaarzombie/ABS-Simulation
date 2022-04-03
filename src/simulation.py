@@ -85,7 +85,7 @@ def calculate_forces(locations, boundary, sigma, dt):
     pot_ens: numpy.array of float64
         Potential energies of spheres.
     """
-    forces = np.empty_like(locations)
+    forces = np.zeros_like(locations)
     pot_ens = np.zeros(len(locations))
 
     diam = boundary*np.sqrt(2)
@@ -94,11 +94,9 @@ def calculate_forces(locations, boundary, sigma, dt):
     ecut = 4*s6*(s6**2/cut_off**6 - 1/cut_off**3)
 
     for i in np.arange(len(locations)):
-        s1 = locations[i]
         # Loop over unique pairs
         for j in np.arange(i+1, len(locations)):
-            s2 = locations[j]
-            dist = s1 - s2
+            dist = locations[i] - locations[j]
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
             r2 = np.inner(dist, dist)
             if r2 < cut_off:
@@ -137,14 +135,22 @@ def step(spheres, boundary, sigma, dt, file):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
+    # Velocity Verlet for updating positions
+    # x(t + dt)
+    for s in spheres:
+        s.location += s.velocity * dt + 0.5 * s.acceleration * dt**2
+
+    # a(t + dt) and v(t + dt)
     locs = _get_locations(spheres)
     fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
-    # Verlet for updating locations
+
     for i in np.arange(len(spheres)):
         s = spheres[i]
-        new_location = 2*s.location - s.old_location + fs[i] * dt**2
-        s.update(new_location, pot_ens[i], dt)
+        s.velocity += 0.5 * dt * (s.acceleration + fs[i])
+        s.acceleration = fs[i]
+        s.potential_energy = pot_ens[i]
         print(f"{s}", end="\n", file=file)
+
     return spheres
 
 def _get_locations(spheres):
