@@ -2,7 +2,7 @@ import numpy as np
 import scipy.constants as const
 from src.sphere import Sphere
 
-def initialize(window_size, count, temperature, dt):
+def initialize(bounds, count, temperature, dt):
     """
     Initialize spheres for simulation.
 
@@ -13,8 +13,8 @@ def initialize(window_size, count, temperature, dt):
 
     Parameters
     ----------
-    window_size: int
-        Size of observed window, restricts location of spheres.
+    bounds: int
+        Size of observed window, restricts position of spheres.
     count: int
         Number of spheres to be created.
     temperature:
@@ -28,8 +28,8 @@ def initialize(window_size, count, temperature, dt):
         Array of ABS for simulation.
     """
     # Create lattice
-    dl = np.round(window_size / np.cbrt(count))
-    li = np.arange(window_size, step=dl)
+    dl = np.round(bounds / np.cbrt(count))
+    li = np.arange(bounds, step=dl)
     x, y, z = np.meshgrid(li, li, li)
     x = np.reshape(x, [-1, 1])
     y = np.reshape(y, [-1, 1])
@@ -41,9 +41,9 @@ def initialize(window_size, count, temperature, dt):
     mean_vel = np.zeros(3)
     mean_vel2 = 0
     for i in np.arange(count):
-        s = Sphere(window_size)
+        s = Sphere(bounds)
         # Put sphere on lattice
-        s.location = lattice[i]
+        s.position = lattice[i]
         # Assign random velocity
         s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
 
@@ -56,21 +56,19 @@ def initialize(window_size, count, temperature, dt):
     for s in spheres:
         # Correct velocity for total vel = 0 and desired temperature
         s.velocity = (s.velocity - mean_vel) * temp_fac
-        # Estimate old location
-        s.old_location = s.location - s.velocity*dt
 
     return spheres
 
-def calculate_forces(locations, boundary, sigma, dt):
+def calculate_forces(positions, boundary, sigma, dt):
     """
-    Calculate forces and potential energy for spheres at locations.
+    Calculate forces and potential energy for spheres at positions.
 
-    Calculate forces acting on sphere at location and potential energy.
+    Calculate forces acting on sphere at positions and potential energy.
 
     Parameters:
     -----------
-    locations: numpy.array of float64
-        Locations of spheres.
+    positions: numpy.array of float64
+        Positions of spheres.
     boundary: int
         Size of simulation window.
     sigma: float32
@@ -85,18 +83,18 @@ def calculate_forces(locations, boundary, sigma, dt):
     pot_ens: numpy.array of float64
         Potential energies of spheres.
     """
-    forces = np.zeros_like(locations)
-    pot_ens = np.zeros(len(locations))
+    forces = np.zeros_like(positions)
+    pot_ens = np.zeros(len(positions))
 
     diam = boundary*np.sqrt(2)
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
     ecut = 4*s6*(s6**2/cut_off**6 - 1/cut_off**3)
 
-    for i in np.arange(len(locations)):
+    for i in np.arange(len(positions)):
         # Loop over unique pairs
-        for j in np.arange(i+1, len(locations)):
-            dist = locations[i] - locations[j]
+        for j in np.arange(i+1, len(positions)):
+            dist = positions[i] - positions[j]
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
             r2 = np.inner(dist, dist)
             if r2 < cut_off:
@@ -138,10 +136,10 @@ def step(spheres, boundary, sigma, dt, file):
     # Velocity Verlet for updating positions
     # x(t + dt)
     for s in spheres:
-        s.location += s.velocity * dt + 0.5 * s.acceleration * dt**2
+        s.position += s.velocity * dt + 0.5 * s.acceleration * dt**2
 
     # a(t + dt) and v(t + dt)
-    locs = _get_locations(spheres)
+    locs = _get_positions(spheres)
     fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
 
     for i in np.arange(len(spheres)):
@@ -153,11 +151,11 @@ def step(spheres, boundary, sigma, dt, file):
 
     return spheres
 
-def _get_locations(spheres):
+def _get_positions(spheres):
     """
-    Get list of locations from list of spheres.
+    Get list of positions from list of spheres.
 
-    Extracts location information from spheres and gives list of pure floats.
+    Extracts positions information from spheres and gives list of pure floats.
 
     Parameters
     ----------
@@ -166,10 +164,10 @@ def _get_locations(spheres):
     Returns:
     --------
     numpy.array of float64
-        Array of locations of ABSs.
+        Array of positions of ABSs.
     """
     loc = np.empty((0, 3), float)
     for s in spheres:
-        loc = np.append(loc, [s.location], axis=0)
+        loc = np.append(loc, [s.position], axis=0)
     return loc
 

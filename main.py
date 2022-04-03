@@ -6,7 +6,7 @@ import src.simulation as simulation
 
 config = {
     "save_file": "abs_simulation.csv",
-    "window_size": 3,
+    "bounds": 3,
     "sphere_count": 9,
     "simulation_timestep": 0.0005,
     "simulation_steps": 1000,
@@ -20,12 +20,12 @@ def run():
 
     Run through the default simulation to generate data files.
     """
-    spheres = simulation.initialize(window_size=config["window_size"], count=config["sphere_count"], temperature=config["temperature"], dt=config["simulation_timestep"])
+    spheres = simulation.initialize(bounds=config["bounds"], count=config["sphere_count"], temperature=config["temperature"], dt=config["simulation_timestep"])
 
     dt = config["simulation_timestep"]
     with open(config["save_file"], "w") as file:
         for i in np.arange(config["simulation_steps"]):
-            spheres = simulation.step(spheres, config["window_size"], config["sigma"], dt, file)
+            spheres = simulation.step(spheres, config["bounds"], config["sigma"], dt, file)
 
 def show():
     """
