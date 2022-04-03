@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.constants as const
+from numba import njit
 from src.sphere import Sphere
 
 def initialize(bounds, count, temperature, dt):
@@ -48,7 +49,7 @@ def initialize(bounds, count, temperature, dt):
         s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
 
         mean_vel += s.velocity/count     # mean total velocity
-        mean_vel2 += np.inner(s.velocity, s.velocity)/count # mean velocity squared
+        mean_vel2 += np.dot(s.velocity, s.velocity)/count # mean velocity squared
 
         spheres = np.append(spheres, s)
 
@@ -59,6 +60,7 @@ def initialize(bounds, count, temperature, dt):
 
     return spheres
 
+@njit
 def calculate_forces(positions, boundary, sigma, dt):
     """
     Calculate forces and potential energy for spheres at positions.
@@ -96,7 +98,7 @@ def calculate_forces(positions, boundary, sigma, dt):
         for j in np.arange(i+1, len(positions)):
             dist = positions[i] - positions[j]
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
-            r2 = np.inner(dist, dist)
+            r2 = np.dot(dist, dist)
             if r2 < cut_off:
                 # Calculate acting force, Lennard Jones potential
                 r2d = 1/r2
