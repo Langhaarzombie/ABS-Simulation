@@ -6,11 +6,11 @@ import src.simulation as simulation
 
 config = {
     "save_file": "abs_simulation.csv",
-    "bounds": 3,
-    "sphere_count": 9,
+    "bounds": 10,
+    "sphere_count": 1000,
     "simulation_timestep": 0.0005,
     "simulation_steps": 1000,
-    "temperature": 300,
+    "temperature": 250,
     "sigma": 1,
 }
 

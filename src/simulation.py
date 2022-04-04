@@ -12,10 +12,10 @@ def initialize(bounds, count, temperature, dt):
     a random velocity so that the total velocity is zero. The
     given temperature defines the velocity scaling.
 
-    Parameters
-    ----------
+    Parameters:
+    -----------
     bounds: int
-        Size of observed window, restricts position of spheres.
+        Length of observed cubic window.
     count: int
         Number of spheres to be created.
     temperature:
@@ -23,42 +23,68 @@ def initialize(bounds, count, temperature, dt):
     dt: float32
         Size of timestep in simulation.
 
-    Returns
-    -------
+    Returns:
+    --------
     numpy.array of Sphere
         Array of ABS for simulation.
     """
-    # Create lattice
-    dl = np.round(bounds / np.cbrt(count))
-    li = np.arange(bounds, step=dl)
-    x, y, z = np.meshgrid(li, li, li)
-    x = np.reshape(x, [-1, 1])
-    y = np.reshape(y, [-1, 1])
-    z = np.reshape(z, [-1, 1])
-    lattice = np.concatenate((x, y, z), axis=1)
+    # Create lattice and generate spheres
+    spheres, mean_vel, mean_vel2 = generate_spheres(bounds, count)
 
-    # Generate spheres
-    spheres = np.array([])
-    mean_vel = np.zeros(3)
-    mean_vel2 = 0
-    for i in np.arange(count):
-        s = Sphere(bounds)
-        # Put sphere on lattice
-        s.position = lattice[i]
-        # Assign random velocity
-        s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
-
-        mean_vel += s.velocity/count     # mean total velocity
-        mean_vel2 += np.dot(s.velocity, s.velocity)/count # mean velocity squared
-
-        spheres = np.append(spheres, s)
-
+    # Readjust velocities acc. to temp and total_momentum = 0
     temp_fac = np.sqrt(3*temperature/mean_vel2)
     for s in spheres:
-        # Correct velocity for total vel = 0 and desired temperature
         s.velocity = (s.velocity - mean_vel) * temp_fac
 
     return spheres
+
+def generate_spheres(bounds, count):
+    """
+    Put spheres on fcc lattice, assign random velocity.
+
+    Generates fcc lattice and assigns locations to spheres.
+    Assigns randomly distributed velocities to spheres (total momentum != 0).
+
+    Parameters:
+    -----------
+    bounds: int
+        Length of observed cubic window.
+    count: int
+        Number of spheres to generate.
+
+    Returns:
+    --------
+    numpy.array of Sphere
+        Array of ABS with assigned locations.
+    float64
+        Mean velocity of all spheres.
+    float64
+        Mean velocity squared of all spheres.
+    """
+    cpd = np.ceil(np.cbrt(count / 4)) # cells per direction x, y, z
+    a = bounds / cpd # lattice constant
+    basis = a * np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    cell = a * np.array([[0.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.5, 0.0], [0.5, 0.0, 0.5]])
+
+    spheres = np.array([])
+    mean_vel = np.zeros(3)
+    mean_vel2 = 0
+
+    indices = np.arange(cpd)
+    for i in indices:
+        for j in indices:
+            for k in indices:
+                origin = np.dot(basis.T, [i, j, k])
+                for c in cell:
+                    s = Sphere(bounds)
+                    s.position = origin + c
+                    s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
+                    mean_vel += s.velocity/count     # mean total velocity
+                    mean_vel2 += np.dot(s.velocity, s.velocity)/count # mean velocity squared
+                    spheres = np.append(spheres, s)
+                    if len(spheres) == count:
+                        return spheres, mean_vel, mean_vel2
+    return spheres, mean_vel, mean_vel2
 
 @njit
 def calculate_forces(positions, boundary, sigma, dt):
@@ -168,7 +194,7 @@ def _get_positions(spheres):
     numpy.array of float64
         Array of positions of ABSs.
     """
-    loc = np.empty((0, 3), float)
+    loc = np.zeros((0, 3), float)
     for s in spheres:
         loc = np.append(loc, [s.position], axis=0)
     return loc
