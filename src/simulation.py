@@ -121,6 +121,8 @@ def calculate_forces(positions, boundary, sigma, dt):
 
     for i in np.arange(len(positions)):
         # Loop over unique pairs
+        force_i = 0
+        pot_ens_i = 0
         for j in np.arange(i+1, len(positions)):
             dist = positions[i] - positions[j]
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
@@ -130,10 +132,12 @@ def calculate_forces(positions, boundary, sigma, dt):
                 r2d = 1/r2
                 r6d = r2d**3
                 force = 48*r2d*r6d*s6*(r6d*s6-0.5)
-                forces[i] += force * dist
+                forces_i += force * dist
                 forces[j] -= force * dist
-                pot_ens[i] += 2*r6d*s6*(r6d*s6-1) - ecut
+                pot_ens_i += 2*r6d*s6*(r6d*s6-1) - ecut
                 pot_ens[j] += 2*r6d*s6*(r6d*s6-1) - ecut
+        forces[i] = force_i
+        pot_ens[i] = pot_ens_i
     return forces, pot_ens
 
 def step(spheres, boundary, sigma, dt, file):
