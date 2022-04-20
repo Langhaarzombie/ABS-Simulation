@@ -2,30 +2,50 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import src.simulation as simulation
+from src import initialize, simulation
+from src.writer import Writer
 
 config = {
+    "init_file": "abs_init.csv",
     "save_file": "abs_simulation.csv",
-    "bounds": 10,
-    "sphere_count": 1000,
+    "observables": ["position", "velocity", "potential_energy", "kinetic_energy"],
+    "bounds": 2,
+    "sphere_count": 20,
     "simulation_timestep": 0.0005,
-    "simulation_steps": 1000,
+    "simulation_steps": 100,
     "temperature": 250,
     "sigma": 1,
 }
 
-def run():
+def run(init_file, dump_init):
     """
     Run main simulation.
 
     Run through the default simulation to generate data files.
+
+    Parameters:
+    -----------
+    init_file: str
+        File name with init configuration.
+    dump_init:
+        File to store init configuration to.
     """
-    spheres = simulation.initialize(bounds=config["bounds"], count=config["sphere_count"], temperature=config["temperature"], dt=config["simulation_timestep"])
+    if init_file:
+        spheres = initialize.from_file(init_file)
+    else:
+        spheres = initialize.random(bounds=config["bounds"], count=config["sphere_count"], temperature=config["temperature"], dt=config["simulation_timestep"])
+
+    if dump_init:
+        saviour = Writer(dump_init, ["position", "velocity", "bounds"])
+        saviour.write(spheres)
+        saviour.close_file()
 
     dt = config["simulation_timestep"]
-    with open(config["save_file"], "w") as file:
-        for i in np.arange(config["simulation_steps"]):
-            spheres = simulation.step(spheres, config["bounds"], config["sigma"], dt, file)
+    saviour = Writer(config["save_file"], config["observables"])
+    for i in np.arange(config["simulation_steps"]):
+        spheres = simulation.step(spheres, config["bounds"], config["sigma"], dt)
+        saviour.write(spheres)
+    saviour.close_file()
 
 def show():
     """
@@ -33,7 +53,7 @@ def show():
 
     Show the animated simulation of generated data files.
     """
-    data = np.loadtxt(config["save_file"])
+    data = np.genfromtxt(config["save_file"], names=True)
     fig = plt.figure(figsize=(10, 5))
     ax2 = fig.add_subplot(211)
     ax3 = fig.add_subplot(212)
@@ -71,8 +91,10 @@ def _plot_energy(data):
     kinetic = np.array([])
     for i in ts:
         istart = config["sphere_count"] * i
-        potential = np.append(potential, np.sum(data[istart:istart + config["sphere_count"], 6]))
-        kinetic = np.append(kinetic, np.sum(data[istart:istart + config["sphere_count"], 7]))
+        p = np.sum(data[istart:istart + config["sphere_count"]]["pen"])
+        k = np.sum(data[istart:istart + config["sphere_count"]]["ken"])
+        potential = np.append(potential, p)
+        kinetic = np.append(kinetic, k)
 
     total_energy = kinetic + potential
 
@@ -108,17 +130,19 @@ def _plot_momentum(data):
     momentum_z = np.array([])
     for i in ts:
         istart = config["sphere_count"] * i
-        momentum_x = np.append(momentum_x, np.sum(data[istart:istart + config["sphere_count"], 3]))
-        momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["sphere_count"], 4]))
-        momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["sphere_count"], 5]))
+        momentum_x = np.append(momentum_x, np.sum(data[istart:istart + config["sphere_count"]]["vx"]))
+        momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["sphere_count"]]["vy"]))
+        momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["sphere_count"]]["vz"]))
     return ts, momentum_x, momentum_y, momentum_z
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--show", dest="mode", action="store_const", const="show", default="run_show", help="show existing data (default: generate and show new data)")
+    parser.add_argument("-i", "--init", dest="init", action="store", default=None, help="use init file for simulation (default: init randomly)")
+    parser.add_argument("-d", "--dump-init", dest="dump_init", action="store", default=None, help="dump init config into file (default: don\'t save init)")
     args = vars(parser.parse_args())
 
     if args["mode"] == "run_show":
-        run()
+        run(init_file=args["init"], dump_init=args["dump_init"])
     show()

@@ -86,7 +86,6 @@ class Sphere:
             return coord - boundary
         return coord
 
-
     def __str__(self):
         return str(f"""{self.position[0]}\t{self.position[1]}\t{self.position[2]}\t{self.velocity[0]}\t{self.velocity[1]}\t{self.velocity[2]}\t{self.potential_energy}\t{self.kinetic_energy()}""")
 
