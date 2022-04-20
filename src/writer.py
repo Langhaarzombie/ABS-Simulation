@@ -28,7 +28,26 @@ class Writer:
     def __init__(self, filename, observables):
         self.file = open(filename, "w")
         self.observables = observables
-        print(self.get_header(self.observables), end="\n", file=self.file)
+        print(self.get_header(), end="\n", file=self.file)
+
+    @classmethod
+    def from_config(cls, config):
+        """
+        Create Writer object from config file.
+
+        Parameters:
+        -----------
+        config: dict
+            Config read from yaml config file.
+        Returns:
+        --------
+        Writer
+            Writer object to save data with.
+        """
+        filename = config["save_file"]
+        # TODO implement that writer considers how often to calc observables
+        observables = [*config["observables"].keys()]
+        return cls(filename, observables)
 
     def close_file(self):
         """

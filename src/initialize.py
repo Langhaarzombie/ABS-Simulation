@@ -1,8 +1,9 @@
 import numpy as np
 from numba import njit
 from src.sphere import Sphere
+from src.writer import Writer
 
-def random(bounds, count, temperature, dt):
+def random(bounds, count, temperature, dt, save_file):
     """
     Initialize spheres for simulation with random distribution.
 
@@ -21,6 +22,8 @@ def random(bounds, count, temperature, dt):
         Temperature of the simulated system.
     dt: float32
         Size of timestep in simulation.
+    save_file: str
+        Filename to save init to.
 
     Returns:
     --------
@@ -34,6 +37,11 @@ def random(bounds, count, temperature, dt):
     temp_fac = np.sqrt(3*temperature/mean_vel2)
     for s in spheres:
         s.velocity = (s.velocity - mean_vel) * temp_fac
+
+    # Save init to file
+    saviour = Writer(save_file, ["position", "velocity", "bounds"])
+    saviour.write(spheres)
+    saviour.close_file()
 
     return spheres
 

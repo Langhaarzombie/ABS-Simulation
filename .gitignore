@@ -4,6 +4,8 @@
 
 ### Project Specific ###
 *.csv
+*.yml
+*.yaml
 
 ### Linux ###
 *~

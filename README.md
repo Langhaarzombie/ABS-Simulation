@@ -11,20 +11,31 @@ There are two options for you:
 Generating data and then showing the simulation is the default behaviour.
 Therefore, you can run the program simply with `python main.py`.
 
-If you just want to show some already generated data, you need to append *-s* or *--show*.
-Consequently, your command will look like `python main.py --show`.
+For detailled information on how to only show data or use specific inits, use `python main.py --help`.
 
 ## Configuration
 
-Located in `main.py` there is a config variable that contains necessary configurations to run the program.
+For configuring the simulation the file `abs_config.yml` (by default) is used.
+In this file, the following parameters need to be set:
 
-- `save_file`: filename where simulation data is written to and read from
-- `window_size`: dimensions of the cube the spheres move in
-- `sphere_count`: number of spheres to simulate
-- `simulation_timestep`: size of one timestep in the simulation
-- `simulation_steps`: how many timesteps are calculated
-- `temperature`: init value to define velocities of spheres
-- `sigma`: used in LJ potential, also defines interaction range
+- `count`: number of spheres to simulate (default: 20)
+- `bounds`: bounds of simulated cube (default: 2)
+- `timestep`: size of timestep (default: 0.0005)
+- `steps`: number to timesteps to simulate (default: 100)
+- `sigma`: used in WCA potential & defines interaction range (default: 1)
+- `temperature`: temperature of initialization (default: 200)
+- `init`:
+    - `save_file`: filename for storing init config in (default: `abs_init.csv`)
+- `run`:
+    - `save_file`: filename for storing simulation data (default: `abs_simulation.csv`)
+    - `observables`: collection of observables and how frequently they are saved in units of timesteps (default: 1 for all of the following)
+        - `position`
+        - `velocity`
+        - `potential_energy`
+        - `kinetic_energy`
 
-*NOTE that all the configurations are for running and showing the simulation.
-Showing data that was generated with a different configuration might result in unexpected behaviour.*
+NOTE that in order to show simulation data correctly, the `count` and `steps` value in the config file must be the same when generating and showing the data.
+
+For now it is not possible to omit certain parameters.
+Thus it is advised to copy the default config to `abs_config.yml` and start from there.
+
