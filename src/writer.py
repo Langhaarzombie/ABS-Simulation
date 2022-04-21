@@ -22,6 +22,7 @@ class Writer:
         "velocity": "vx\tvy\tvz",
         "kinetic_energy": "ken",
         "potential_energy": "pen",
+        "temperature": "temp",
         "bounds": "b"
     }
 
@@ -74,7 +75,7 @@ class Writer:
         for s in spheres:
             data_line = ""
             for o in self.observables:
-                data_line += self.get_observable(s, o) + "\t"
+                data_line += self.get_observable(spheres, s, o) + "\t"
             print(data_line, end="\n", file=self.file)
 
     def get_header(self):
@@ -102,7 +103,7 @@ class Writer:
                 print(f"No header defined for observable of name: {o}")
         return header[:-1]
 
-    def get_observable(self, sphere, observable):
+    def get_observable(self, spheres, sphere, observable):
         """
         Get data from sphere associated with observable name.
 
@@ -112,6 +113,8 @@ class Writer:
 
         Parameters:
         -----------
+        spheres: numpy.array of Sphere
+            Array of spheres used in simulation.
         sphere: Sphere
             Sphere to get data from.
         observable: str
@@ -134,6 +137,8 @@ class Writer:
                 return f"{sphere.kinetic_energy()}"
             case "potential_energy":
                 return f"{sphere.potential_energy}"
+            case "temperature":
+                return f"{2*sphere.kinetic_energy() / (3 * len(spheres))}"
             case "bounds":
                 return f"{sphere.bounds}"
             case _:

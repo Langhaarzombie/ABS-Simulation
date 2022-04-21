@@ -26,10 +26,10 @@ def run(config, init_file):
     else:
         spheres = initialize.random(bounds=config["bounds"], count=config["count"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
 
-    dt = config["timestep"]
+    # Run
     saviour = Writer.from_config(config["run"])
     for i in np.arange(config["steps"]):
-        spheres = simulation.step(spheres, config["bounds"], config["sigma"], dt)
+        spheres = simulation.step(spheres, config["bounds"], config["sigma"], config["timestep"])
         saviour.write(spheres)
     saviour.close_file()
 
@@ -48,24 +48,30 @@ def show(config, data_file):
     """
     data = np.genfromtxt(data_file, names=True)
     fig = plt.figure(figsize=(10, 5))
-    ax2 = fig.add_subplot(211)
-    ax3 = fig.add_subplot(212)
+    ax2 = fig.add_subplot(221)
+    ax3 = fig.add_subplot(222)
+    ax4 = fig.add_subplot(223)
 
     ax2.set_title("Energy")
-    exs, epotys, ekinys, etotys = _plot_energy(config, data)
-    ax2.get_xaxis().set_visible(False)
-    ax2.plot(exs, epotys, label="Potential")
-    ax2.plot(exs, ekinys, label="Kinetic")
-    ax2.plot(exs, etotys, label="Total")
+    ts, epotys, ekinys, etotys = _plot_energy(config, data)
+    ax2.plot(ts, epotys, label="Potential")
+    ax2.plot(ts, ekinys, label="Kinetic")
+    ax2.plot(ts, etotys, label="Total")
     ax2.legend()
 
     ax3.set_title("Total Momentum")
-    mts, mxs, mys, mzs = _plot_momentum(config, data)
-    ax3.plot(mts, mxs, label="X")
-    ax3.plot(mts, mys, label="Y")
-    ax3.plot(mts, mzs, label="Z")
+    _, mxs, mys, mzs = _plot_momentum(config, data)
+    ax3.plot(ts, mxs, label="X")
+    ax3.plot(ts, mys, label="Y")
+    ax3.plot(ts, mzs, label="Z")
     ax3.legend()
 
+    ax4.set_title("Temperature")
+    _, temps = _plot_temperature(config, data)
+    ax4.plot(ts, temps, label="Red. Temperature")
+    ax4.legend()
+
+    plt.tight_layout()
     plt.show()
 
 def _plot_energy(config, data):
@@ -76,6 +82,8 @@ def _plot_energy(config, data):
 
     Parameters:
     -----------
+    config: dict
+        Config of simulation.
     data: numpy.ndarray of numpy.ndarray of int
         List of spheres.
     """
@@ -99,11 +107,13 @@ def _plot_momentum(config, data):
     """
     Get momenta behaviour over time.
 
-    Gives the time and momenta of center of mass in x, y, z direction
+    Give the time and momenta of center of mass in x, y, z direction
     over time of simulation.
 
     Parameters:
     -----------
+    config: dict
+        Config of simulation.
     data: 2d numpy.ndarray of float64
         CSV data of simulation.
     Returns:
@@ -127,6 +137,32 @@ def _plot_momentum(config, data):
         momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["count"]]["vy"]))
         momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["count"]]["vz"]))
     return ts, momentum_x, momentum_y, momentum_z
+
+def _plot_temperature(config, data):
+    """
+    Get reduced temperature over time.
+
+    Parameters:
+    -----------
+    config: dict
+        Config of simulation.
+    data: 2d numpy.ndarray of float64
+        CSV data of simulation.
+    Returns:
+    --------
+    ts: numpy.array of int
+        Timesteps in simulation.
+    temp: numpy.array of float64
+        Temperature of simulated system.
+    """
+    ts = np.arange(int(len(data)/config["count"]))
+    temps = np.array([])
+    for i in ts:
+        istart = config["count"] * i
+        temp = np.sum(data[istart:istart + config["count"]]["temp"])
+        temps = np.append(temps, temp)
+    return ts, temps
+
 
 def _load_config(filename):
     """
