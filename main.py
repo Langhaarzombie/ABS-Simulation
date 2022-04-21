@@ -22,7 +22,7 @@ def run(config, init_file):
     # Initialize
     if init_file:
         spheres = initialize.from_file(init_file)
-        config["count"] = 20
+        config["count"] = len(spheres)
     else:
         spheres = initialize.random(bounds=config["bounds"], count=config["count"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
 
