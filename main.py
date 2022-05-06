@@ -3,6 +3,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import src.plotter as plotter
 from src import initialize, simulation
 from src.writer import Writer
 
@@ -51,118 +52,36 @@ def show(config, data_file):
     ax2 = fig.add_subplot(221)
     ax3 = fig.add_subplot(222)
     ax4 = fig.add_subplot(223)
+    ax5 = fig.add_subplot(224)
 
     ax2.set_title("Energy")
-    ts, epotys, ekinys, etotys = _plot_energy(config, data)
+    ts, epotys, ekinys, etotys = plotter.energy(config, data)
     ax2.plot(ts, epotys, label="Potential")
     ax2.plot(ts, ekinys, label="Kinetic")
     ax2.plot(ts, etotys, label="Total")
     ax2.legend()
 
     ax3.set_title("Total Momentum")
-    _, mxs, mys, mzs = _plot_momentum(config, data)
+    _, mxs, mys, mzs = plotter.momentum(config, data)
     ax3.plot(ts, mxs, label="X")
     ax3.plot(ts, mys, label="Y")
     ax3.plot(ts, mzs, label="Z")
     ax3.legend()
 
     ax4.set_title("Temperature")
-    _, temps = _plot_temperature(config, data)
+    _, temps = plotter.temperature(config, data)
     ax4.plot(ts, temps, label="Red. Temperature")
     ax4.legend()
 
+    ax5.set_title("Radial Distribution")
+    r, prob = plotter.radial_distribution(config, data)
+    ax5.set_xlabel(r"$r / \sigma$")
+    ax5.set_ylabel(r"$g(r)$")
+    ax5.axhline(y=1, dashes=(5, 2), color="grey", lw=0.8)
+    ax5.plot(r, prob)
+
     plt.tight_layout()
     plt.show()
-
-def _plot_energy(config, data):
-    """
-    Calculate total, kinetic and potential energy during simulation for plot.
-
-    Create the plot data to check energy conservation and stability of the system.
-
-    Parameters:
-    -----------
-    config: dict
-        Config of simulation.
-    data: numpy.ndarray of numpy.ndarray of int
-        List of spheres.
-    """
-    ts = np.arange(int(len(data)/config["count"]))
-    potential = np.array([])
-    kinetic = np.array([])
-    for i in ts:
-        istart = config["count"] * i
-        p = np.sum(data[istart:istart + config["count"]]["pen"])
-        k = np.sum(data[istart:istart + config["count"]]["ken"])
-        potential = np.append(potential, p)
-        kinetic = np.append(kinetic, k)
-
-    total_energy = kinetic + potential
-
-    print(f"(std / mean) of total energy: {np.std(total_energy) / np.mean(total_energy)}")
-
-    return ts, potential, kinetic, total_energy
-
-def _plot_momentum(config, data):
-    """
-    Get momenta behaviour over time.
-
-    Give the time and momenta of center of mass in x, y, z direction
-    over time of simulation.
-
-    Parameters:
-    -----------
-    config: dict
-        Config of simulation.
-    data: 2d numpy.ndarray of float64
-        CSV data of simulation.
-    Returns:
-    --------
-    ts: numpy.array of int
-        Timesteps in simulation.
-    momentum_x: numpy.array of float64
-        Momentum of center of mass in x direction.
-    momentum_y: numpy.array of float64
-        Momentum of center of mass in y direction.
-    momentum_z: numpy.array of float64
-        Momentum of center of mass in z direction.
-    """
-    ts = np.arange(int(len(data)/config["count"]))
-    momentum_x = np.array([])
-    momentum_y = np.array([])
-    momentum_z = np.array([])
-    for i in ts:
-        istart = config["count"] * i
-        momentum_x = np.append(momentum_x, np.sum(data[istart:istart + config["count"]]["vx"]))
-        momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["count"]]["vy"]))
-        momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["count"]]["vz"]))
-    return ts, momentum_x, momentum_y, momentum_z
-
-def _plot_temperature(config, data):
-    """
-    Get reduced temperature over time.
-
-    Parameters:
-    -----------
-    config: dict
-        Config of simulation.
-    data: 2d numpy.ndarray of float64
-        CSV data of simulation.
-    Returns:
-    --------
-    ts: numpy.array of int
-        Timesteps in simulation.
-    temp: numpy.array of float64
-        Temperature of simulated system.
-    """
-    ts = np.arange(int(len(data)/config["count"]))
-    temps = np.array([])
-    for i in ts:
-        istart = config["count"] * i
-        temp = np.sum(data[istart:istart + config["count"]]["temp"])
-        temps = np.append(temps, temp)
-    return ts, temps
-
 
 def _load_config(filename):
     """
