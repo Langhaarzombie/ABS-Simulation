@@ -10,17 +10,25 @@ class Sphere:
         Size of observed window, restricts position of spheres.
     position: numpy.ndarray of int
         x, y, z coordinates.
+    init_position: numpy.ndarray of int
+        x, y, z coordinates at t = 0.
     velocity: numpy.ndarray of int
         Velocity in x, y, z direction.
+    init_velocity: numpy.ndarray of int
+        Velocity in x, y, z direction at t = 0.
     acceleration: numpy.ndarray of int
         Acceleration in x, y, z direction.
     potential_energy: float64
         Potential energy of sphere.
     """
-    def __init__(self, bounds):
+    def __init__(self, bounds, position, velocity):
         self.bounds = bounds
-        self.position = np.zeros(3)
-        self.velocity = np.zeros(3)
+
+        self.position = position
+        self.velocity = velocity
+        self.init_position = self.position
+        self.init_velocity = self.velocity
+
         self.acceleration  = np.zeros(3)
         self.potential_energy = 0
 

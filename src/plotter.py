@@ -13,8 +13,18 @@ def energy(config, data):
         Config of simulation.
     data: numpy.ndarray of numpy.ndarray of int
         List of spheres.
+    Returns:
+    --------
+    ts: numpy.array of int
+        Timesteps in simulation.
+    potential: numpy.array of float64
+        Total potential energy over time.
+    kinetic: numpy.array of float64
+        Total kinetic energy over time.
+    total_energy: numpy.array of float64
+        Total energy over time.
     """
-    ts = np.arange(int(len(data)/config["count"]))
+    ts = np.arange(config["steps"])
     potential = np.array([])
     kinetic = np.array([])
     for i in ts:
@@ -54,7 +64,7 @@ def momentum(config, data):
     momentum_z: numpy.array of float64
         Momentum of center of mass in z direction.
     """
-    ts = np.arange(int(len(data)/config["count"]))
+    ts = np.arange(config["steps"])
     momentum_x = np.array([])
     momentum_y = np.array([])
     momentum_z = np.array([])
@@ -82,7 +92,7 @@ def temperature(config, data):
     temp: numpy.array of float64
         Temperature of simulated system.
     """
-    ts = np.arange(int(len(data)/config["count"]))
+    ts = np.arange(config["steps"])
     temps = np.array([])
     for i in ts:
         istart = config["count"] * i
@@ -156,4 +166,29 @@ def _rad_distr(spheres, bounds, binn):
         ppv = (len(spheres) / bounds**3) * vol * (4/3) * np.pi
         g[k] = g[k] / (ppv * len(spheres))
     return g
+
+def velocity_correlation(config, data):
+    """
+    Calculate the average particle velocity correlation over time.
+
+    Parameters:
+    -----------
+    config: dict
+        Config of simulation.
+    data: 2d numpy.ndarray of float64
+        CSV data of simulation.
+    Returns:
+    --------
+    ts: numpy.array of int
+        Timesteps in simulation.
+    correls: numpy.array of float64
+        Average velocity correlations over time.
+    """
+    ts = np.arange(config["steps"])
+    correls = np.array([])
+    for i in ts:
+        istart = config["count"] * i
+        correl = np.sum(data[istart:istart + config["count"]]["velcor"]) / config["count"]
+        correls = np.append(correls, correl)
+    return ts, correls
 

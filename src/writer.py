@@ -23,7 +23,8 @@ class Writer:
         "kinetic_energy": "ken",
         "potential_energy": "pen",
         "temperature": "temp",
-        "bounds": "b"
+        "bounds": "b",
+        "velocity_correlation": "velcor"
     }
 
     def __init__(self, filename, observables):
@@ -140,5 +141,7 @@ class Writer:
             return f"{2*sphere.kinetic_energy() / (3 * len(spheres))}"
         elif observable == "bounds":
             return f"{sphere.bounds}"
+        elif observable == "velocity_correlation":
+            return f"{np.dot(sphere.init_velocity, sphere.velocity) / (np.linalg.norm(sphere.init_velocity) * np.linalg.norm(sphere.velocity))}"
         else:
             raise KeyError(f"Undefined observable requested: {observable}")

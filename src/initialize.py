@@ -69,9 +69,7 @@ def from_file(file):
         bounds = d["b"]
         pos = np.array([d["x"], d["y"], d["z"]])
         vel = np.array([d["vx"], d["vy"], d["vz"]])
-        s = Sphere(bounds)
-        s.position = pos
-        s.velocity = vel
+        s = Sphere(bounds, pos, vel)
         spheres = np.append(spheres, s)
     return spheres
 
@@ -114,9 +112,9 @@ def generate_spheres(bounds, count):
             for k in indices:
                 origin = np.dot(basis.T, [i, j, k])
                 for c in cell:
-                    s = Sphere(bounds)
-                    s.position = origin + c
-                    s.velocity = np.random.rand(3) - [0.5, 0.5, 0.5]
+                    pos = origin + c
+                    vel = np.random.rand(3) - [0.5, 0.5, 0.5]
+                    s = Sphere(bounds, pos, vel)
                     mean_vel += s.velocity/count     # mean total velocity
                     mean_vel2 += np.dot(s.velocity, s.velocity)/count # mean velocity squared
                     spheres = np.append(spheres, s)
