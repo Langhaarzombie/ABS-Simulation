@@ -128,18 +128,17 @@ class Writer:
         KeyError:
             If given observable is not defined.
         """
-        match observable:
-            case "position":
-                return f"{sphere.position[0]}\t{sphere.position[1]}\t{sphere.position[2]}"
-            case "velocity":
-                return f"{sphere.velocity[0]}\t{sphere.velocity[1]}\t{sphere.velocity[2]}"
-            case "kinetic_energy":
-                return f"{sphere.kinetic_energy()}"
-            case "potential_energy":
-                return f"{sphere.potential_energy}"
-            case "temperature":
-                return f"{2*sphere.kinetic_energy() / (3 * len(spheres))}"
-            case "bounds":
-                return f"{sphere.bounds}"
-            case _:
-                raise KeyError(f"Undefined observable requested: {observable}")
+        if observable == "position":
+            return f"{sphere.position[0]}\t{sphere.position[1]}\t{sphere.position[2]}"
+        elif observable == "velocity":
+            return f"{sphere.velocity[0]}\t{sphere.velocity[1]}\t{sphere.velocity[2]}"
+        elif observable == "kinetic_energy":
+            return f"{sphere.kinetic_energy()}"
+        elif observable == "potential_energy":
+            return f"{sphere.potential_energy}"
+        elif observable == "temperature":
+            return f"{2*sphere.kinetic_energy() / (3 * len(spheres))}"
+        elif observable == "bounds":
+            return f"{sphere.bounds}"
+        else:
+            raise KeyError(f"Undefined observable requested: {observable}")
