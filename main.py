@@ -113,6 +113,25 @@ def _load_config(filename):
         content = yaml.safe_load(f)
     return content["abs"]
 
+def _print_simulation_info(filename, config):
+    """
+    Print configuration of running simulation at start.
+
+    Parameters:
+    -----------
+    filename: str
+        Name of yaml config file.
+    config: dict
+        Config for running the simulation.
+    """
+    # TODO store config at top of csv file, to show correct config when
+    # only showing data
+    print(f"MD simulation with config file: {filename}")
+    for k in config.keys():
+        print(f"{k}:  {config[k]}")
+    dens = config["count"]*config["sigma"]**3 / config["bounds"]**3
+    print(f"density:  {dens}")
+    print("--------------------------")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -122,6 +141,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     config = _load_config(args["config_file"])
+    _print_simulation_info(args["config_file"], config)
 
     if not args["show_file"]:
         run(config, args["init_file"])
