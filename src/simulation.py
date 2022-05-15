@@ -82,8 +82,8 @@ def step(spheres, boundary, sigma, temperature, dt):
         Updated array of ABS for simulation.
     """
     # Velocity Verlet with Langevin thermostat for updating positions
-    gamma = 0.09
-    sig = 1.7
+    gamma = 100
+    sig = 2
 
     etas = np.array([])
     xis = np.array([])

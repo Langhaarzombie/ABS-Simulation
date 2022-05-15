@@ -3,7 +3,7 @@ from numba import njit
 from src.sphere import Sphere
 from src.writer import Writer
 
-def random(bounds, count, temperature, dt, save_file):
+def random(count, density, temperature, dt, save_file):
     """
     Initialize spheres for simulation with random distribution.
 
@@ -14,10 +14,10 @@ def random(bounds, count, temperature, dt, save_file):
 
     Parameters:
     -----------
-    bounds: int
-        Length of observed cubic window.
     count: int
         Number of spheres to be created.
+    density: float64
+        Target density of simulated system.
     temperature:
         Temperature of the simulated system.
     dt: float32
@@ -31,6 +31,7 @@ def random(bounds, count, temperature, dt, save_file):
         Array of ABS for simulation.
     """
     # Create lattice and generate spheres
+    bounds = np.cbrt(count/density)
     spheres, mean_vel, mean_vel2 = generate_spheres(bounds, count)
 
     # Readjust velocities acc. to temp and total_momentum = 0
@@ -43,7 +44,7 @@ def random(bounds, count, temperature, dt, save_file):
     saviour.write(spheres)
     saviour.close_file()
 
-    return spheres
+    return spheres, bounds
 
 def from_file(file):
     """

@@ -25,7 +25,8 @@ def run(config, init_file):
         spheres = initialize.from_file(init_file)
         config["count"] = len(spheres)
     else:
-        spheres = initialize.random(bounds=config["bounds"], count=config["count"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
+        spheres, bounds = initialize.random(count=config["count"], density=config["density"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
+        config["bounds"] = bounds
 
     # Run
     saviour = Writer.from_config(config["run"])
@@ -129,8 +130,8 @@ def _print_simulation_info(filename, config):
     print(f"MD simulation with config file: {filename}")
     for k in config.keys():
         print(f"{k}:  {config[k]}")
-    dens = config["count"]*config["sigma"]**3 / config["bounds"]**3
-    print(f"density:  {dens}")
+    bounds = np.cbrt(config["count"] / config["density"])
+    print(f"bounds:  {bounds}")
     print("--------------------------")
 
 if __name__ == "__main__":
