@@ -184,11 +184,22 @@ def velocity_correlation(config, data):
     correls: numpy.array of float64
         Average velocity correlations over time.
     """
-    ts = np.arange(config["steps"])
-    correls = np.array([])
-    for i in ts:
-        istart = config["count"] * i
-        correl = np.sum(data[istart:istart + config["count"]]["velcor"]) / config["count"]
-        correls = np.append(correls, correl)
-    return ts, correls
+    cll = np.array([])
+    ls = np.arange(200)
+    for l in ls:
+        s = 0
+        ks = np.arange(ls[-1] - l)
+        for i in np.arange(config["count"]):
+            dots = 0
+            for k in ks[1:]:
+                vkx = data[k*config["count"] + i]["vx"]
+                vky = data[k*config["count"] + i]["vy"]
+                vkz = data[k*config["count"] + i]["vz"]
+                vklx = data[(k+l)*config["count"] + i]["vx"]
+                vkly = data[(k+l)*config["count"] + i]["vy"]
+                vklz = data[(k+l)*config["count"] + i]["vz"]
+                dots += np.dot([vkx, vky, vkz], [vklx, vkly, vklz]) / ks[-1]
+            s += dots
+        cll = np.append(cll, s / config["count"])
+    return ls[:-2], cll[:-2]
 
