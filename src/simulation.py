@@ -56,7 +56,7 @@ def calculate_forces(positions, boundary, sigma, dt):
         pot_ens[i] = pot_ens_i
     return forces, pot_ens
 
-def step(spheres, boundary, sigma, dt):
+def step(spheres, boundary, sigma, temperature, dt):
     """
     Calculate and save simulation step.
 
@@ -71,6 +71,8 @@ def step(spheres, boundary, sigma, dt):
         Size of observed window.
     sigma: float32
         Sigma in the potential.
+    temperature: float32
+        Temperature of the heat bath.
     dt: float32
         Size of timestep.
 
@@ -79,22 +81,43 @@ def step(spheres, boundary, sigma, dt):
     numpy.array of Sphere
         Updated array of ABS for simulation.
     """
-    # Velocity Verlet for updating positions
-    # x(t + dt)
-    for s in spheres:
-        s.position += s.velocity * dt + 0.5 * s.acceleration * dt**2
+    # Velocity Verlet with Langevin thermostat for updating positions
+    gamma = 0.09
+    sig = 1.7
 
-    # a(t + dt) and v(t + dt)
+    etas = np.array([])
+    xis = np.array([])
+    for s in spheres:
+        eta = np.random.normal(loc=0, scale=np.sqrt(2*temperature*gamma), size=3)
+        xi = np.random.normal(loc=0, scale=np.sqrt(2*temperature*gamma), size=3)
+        # v(t + dt/2)
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, eta, xi)
+        # x(t + dt)
+        s.position += s.velocity * dt
+
+        etas = np.append(etas, eta)
+        xis = np.append(xis, xi)
+
+    # forces
     locs = _get_positions(spheres)
     fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
 
+    # v(t + dt)
     for i in np.arange(len(spheres)):
         s = spheres[i]
-        s.velocity += 0.5 * dt * (s.acceleration + fs[i])
         s.acceleration = fs[i]
         s.potential_energy = pot_ens[i]
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, etas[i], xis[i])
 
     return spheres
+
+def _v_half_step(v, dt, f, sig, gamma, eta, xi):
+    res = v + 0.5*dt*f
+    res -= 0.5*dt*gamma*v
+    res += 0.5*np.sqrt(dt)*sig*xi
+    res -= 0.125*dt**2*gamma*(f-gamma*v)
+    res -= 0.25*dt**(3/2)*gamma*sig*(0.5*xi+eta/np.sqrt(3))
+    return res
 
 def _get_positions(spheres):
     """

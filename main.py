@@ -30,7 +30,7 @@ def run(config, init_file):
     # Run
     saviour = Writer.from_config(config["run"])
     for i in np.arange(config["steps"]):
-        spheres = simulation.step(spheres, config["bounds"], config["sigma"], config["timestep"])
+        spheres = simulation.step(spheres, config["bounds"], config["sigma"], config["temperature"], config["timestep"])
         saviour.write(spheres)
     saviour.close_file()
 
