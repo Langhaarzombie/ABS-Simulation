@@ -19,11 +19,11 @@ For configuring the simulation the file `abs_config.yml` (by default) is used.
 In this file, the following parameters need to be set:
 
 - `count`: number of spheres to simulate (default: 20)
-- `bounds`: bounds of simulated cube (default: 2)
-- `timestep`: size of timestep (default: 0.0005)
-- `steps`: number to timesteps to simulate (default: 100)
+- `density`: desired reduced density of the simulated system (default: 0.8)
+- `timestep`: size of timestep (default: 0.001)
+- `steps`: number to timesteps to simulate (default: 1000)
 - `sigma`: used in WCA potential & defines interaction range (default: 1)
-- `temperature`: temperature of initialization (default: 200)
+- `temperature`: reduced temperature of initialization (default: 1)
 - `init`:
     - `save_file`: filename for storing init config in (default: `abs_init.csv`)
 - `run`:
@@ -33,6 +33,7 @@ In this file, the following parameters need to be set:
         - `velocity`
         - `potential_energy`
         - `kinetic_energy`
+        - `temperature`
 
 NOTE that in order to show simulation data correctly, the `count` and `steps` value in the config file must be the same when generating and showing the data.
 

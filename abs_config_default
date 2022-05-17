@@ -1,10 +1,10 @@
 abs:
-  count: 20
-  density: 2
-  timestep: 0.0005
-  steps: 100
+  count: 10
+  density: 0.8
+  timestep: 0.001
+  steps: 1000
   sigma: 1
-  temperature: 1.5
+  temperature: 1
   init:
     save_file: "abs_init.csv"
   run:
@@ -14,3 +14,4 @@ abs:
       velocity: 1
       potential_energy: 1
       kinetic_energy: 1
+      temperature: 1
