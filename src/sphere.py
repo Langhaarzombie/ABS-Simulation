@@ -71,7 +71,7 @@ class Sphere:
         float
             Kinetic energy of the sphere.
         """
-        return 0.5*np.inner(self.velocity, self.velocity)
+        return 0.5*np.dot(self.velocity, self.velocity)
 
     def _correct_boundary(self, coord):
         """

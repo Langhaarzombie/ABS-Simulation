@@ -24,6 +24,7 @@ def run(config, init_file):
     if init_file:
         spheres = initialize.from_file(init_file)
         config["count"] = len(spheres)
+        config["bounds"] = np.cbrt(len(spheres) / config["density"])
     else:
         spheres, bounds = initialize.random(count=config["count"], density=config["density"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
         config["bounds"] = bounds

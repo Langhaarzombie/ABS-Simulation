@@ -98,6 +98,8 @@ def temperature(config, data):
         istart = config["count"] * i
         temp = np.sum(data[istart:istart + config["count"]]["temp"])
         temps = np.append(temps, temp)
+    start = int(config["steps"] / 50)
+    print(f"Average temperature {np.sum(temps[start:]) / (len(temps) - start)}")
     return ts, temps
 
 def radial_distribution(config, data, bin_count=1000):
@@ -122,7 +124,7 @@ def radial_distribution(config, data, bin_count=1000):
     g: numpy.array of float
         Radial distribution values.
     """
-    b = config["bounds"]
+    b = np.cbrt(config["count"] / config["density"])
     g = np.zeros(bin_count)
     for i in np.arange(config["steps"]):
         istart = config["count"] * i
@@ -185,7 +187,7 @@ def velocity_correlation(config, data):
         Average velocity correlations over time.
     """
     cll = np.array([])
-    ls = np.arange(200)
+    ls = np.arange(int(config["steps"] / 20))
     for l in ls:
         s = 0
         ks = np.arange(ls[-1] - l)

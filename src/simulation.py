@@ -33,7 +33,7 @@ def calculate_forces(positions, boundary, sigma, dt):
     diam = boundary*np.sqrt(2)
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
-    ecut = 4*s6*(s6**2/cut_off**6 - 1/cut_off**3)
+    ecut = 2*s6*(s6**2/cut_off**6 - 1/cut_off**3)
 
     for i in np.arange(len(positions)):
         # Loop over unique pairs
@@ -82,18 +82,18 @@ def step(spheres, boundary, sigma, temperature, dt):
         Updated array of ABS for simulation.
     """
     # Velocity Verlet with Langevin thermostat for updating positions
-    gamma = 100
-    sig = 2
+    gamma = 0.02
+    sig = np.sqrt(2*temperature*gamma)
 
     etas = np.array([])
     xis = np.array([])
     for s in spheres:
-        eta = np.random.normal(loc=0, scale=np.sqrt(2*temperature*gamma), size=3)
-        xi = np.random.normal(loc=0, scale=np.sqrt(2*temperature*gamma), size=3)
+        eta = np.random.normal(loc=0, size=3)
+        xi = np.random.normal(loc=0, size=3)
         # v(t + dt/2)
         s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, eta, xi)
         # x(t + dt)
-        s.position += s.velocity * dt
+        s.position += s.velocity*dt + dt**(3/2)*sig*eta/(2*np.sqrt(3))
 
         etas = np.append(etas, eta)
         xis = np.append(xis, xi)
