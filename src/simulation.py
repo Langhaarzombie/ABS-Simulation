@@ -82,21 +82,19 @@ def step(spheres, boundary, sigma, temperature, dt):
         Updated array of ABS for simulation.
     """
     # Velocity Verlet with Langevin thermostat for updating positions
-    gamma = 0.02
+    gamma = 0.355
     sig = np.sqrt(2*temperature*gamma)
 
-    etas = np.array([])
-    xis = np.array([])
-    for s in spheres:
-        eta = np.random.normal(loc=0, size=3)
-        xi = np.random.normal(loc=0, size=3)
+    #  etas = np.array([])
+    #  xis = np.array([])
+    etas = np.random.normal(loc=0, size=(len(spheres), 3))
+    xis = np.random.normal(loc=0, size=(len(spheres), 3))
+    for i in np.arange(len(spheres)):
+        s = spheres[i]
         # v(t + dt/2)
-        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, eta, xi)
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, etas[i], xis[i])
         # x(t + dt)
-        s.position += s.velocity*dt + dt**(3/2)*sig*eta/(2*np.sqrt(3))
-
-        etas = np.append(etas, eta)
-        xis = np.append(xis, xi)
+        s.position += s.velocity*dt + dt**(3/2)*sig*etas[i]/(2*np.sqrt(3))
 
     # forces
     locs = _get_positions(spheres)
