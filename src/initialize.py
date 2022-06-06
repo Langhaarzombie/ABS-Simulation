@@ -40,7 +40,7 @@ def random(count, density, temperature, dt, save_file):
         s.velocity = (s.velocity - mean_vel) * temp_fac
 
     # Save init to file
-    saviour = Writer(save_file, ["position", "velocity", "bounds"])
+    saviour = Writer(save_file, ["position", "velocity", "active_acceleration", "bounds"])
     saviour.write(spheres)
     saviour.close_file()
 
@@ -70,7 +70,8 @@ def from_file(file):
         bounds = d["b"]
         pos = np.array([d["x"], d["y"], d["z"]])
         vel = np.array([d["vx"], d["vy"], d["vz"]])
-        s = Sphere(bounds, pos, vel)
+        act = np.array([d["ax"], d["ay"], d["az"]])
+        s = Sphere(bounds, pos, vel, act)
         spheres = np.append(spheres, s)
     return spheres
 
@@ -115,7 +116,8 @@ def generate_spheres(bounds, count):
                 for c in cell:
                     pos = origin + c
                     vel = np.random.rand(3) - [0.5, 0.5, 0.5]
-                    s = Sphere(bounds, pos, vel)
+                    act = np.random.rand(3) - [0.5, 0.5, 0.5]
+                    s = Sphere(bounds, pos, vel, act / np.linalg.norm(act))
                     mean_vel += s.velocity/count     # mean total velocity
                     mean_vel2 += np.dot(s.velocity, s.velocity)/count # mean velocity squared
                     spheres = np.append(spheres, s)

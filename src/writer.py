@@ -22,6 +22,7 @@ class Writer:
         "velocity": "vx\tvy\tvz",
         "kinetic_energy": "ken",
         "potential_energy": "pen",
+        "active_acceleration": "ax\tay\taz",
         "temperature": "temp",
         "bounds": "b",
         "velocity_correlation": "velcor"
@@ -137,6 +138,8 @@ class Writer:
             return f"{sphere.kinetic_energy()}"
         elif observable == "potential_energy":
             return f"{sphere.potential_energy}"
+        elif observable == "active_acceleration":
+            return f"{sphere.active_acceleration[0]}\t{sphere.active_acceleration[1]}\t{sphere.active_acceleration[2]}"
         elif observable == "temperature":
             return f"{2*sphere.kinetic_energy() / (3 * len(spheres))}"
         elif observable == "bounds":

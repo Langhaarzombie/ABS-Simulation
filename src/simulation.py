@@ -85,14 +85,15 @@ def step(spheres, boundary, sigma, temperature, dt):
     gamma = 0.355
     sig = np.sqrt(2*temperature*gamma)
 
-    #  etas = np.array([])
-    #  xis = np.array([])
+    # Active force components
+    tau = 1
+    U0 = 20
+
     etas = np.random.normal(loc=0, size=(len(spheres), 3))
     xis = np.random.normal(loc=0, size=(len(spheres), 3))
-    for i in np.arange(len(spheres)):
-        s = spheres[i]
+    for i, s in enumerate(spheres):
         # v(t + dt/2)
-        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, etas[i], xis[i])
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, gamma*U0*s.active_acceleration, sig, gamma, etas[i], xis[i])
         # x(t + dt)
         s.position += s.velocity*dt + dt**(3/2)*sig*etas[i]/(2*np.sqrt(3))
 
@@ -101,16 +102,20 @@ def step(spheres, boundary, sigma, temperature, dt):
     fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
 
     # v(t + dt)
-    for i in np.arange(len(spheres)):
-        s = spheres[i]
+    omegas = np.random.normal(loc=0, scale=np.sqrt(2*np.pi/tau), size=(len(spheres), 3))
+    for i, s in enumerate(spheres):
         s.acceleration = fs[i]
         s.potential_energy = pot_ens[i]
-        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, sig, gamma, etas[i], xis[i])
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, gamma*U0*s.active_acceleration, sig, gamma, etas[i], xis[i])
+        # q(t + dt) active force
+        s.active_acceleration += np.cross(omegas[i], s.active_acceleration)
+        s.active_acceleration = s.active_acceleration / np.linalg.norm(s.active_acceleration) # rescale for unit vector
 
     return spheres
 
-def _v_half_step(v, dt, f, sig, gamma, eta, xi):
+def _v_half_step(v, dt, f, f_active, sig, gamma, eta, xi):
     res = v + 0.5*dt*f
+    res += 0.5*dt*f_active
     res -= 0.5*dt*gamma*v
     res += 0.5*np.sqrt(dt)*sig*xi
     res -= 0.125*dt**2*gamma*(f-gamma*v)

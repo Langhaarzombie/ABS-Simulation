@@ -21,13 +21,15 @@ class Sphere:
     potential_energy: float64
         Potential energy of sphere.
     """
-    def __init__(self, bounds, position, velocity):
+    def __init__(self, bounds, position, velocity, active_acceleration):
         self.bounds = bounds
 
         self.position = position
         self.velocity = velocity
         self.init_position = self.position
         self.init_velocity = self.velocity
+
+        self.active_acceleration = active_acceleration
 
         self.acceleration  = np.zeros(3)
         self.potential_energy = 0
