@@ -85,12 +85,12 @@ def show(config, data_file):
     ax4.axhline(y=1, dashes=(5, 2), color="grey", lw=0.8)
     ax4.plot(r, prob)
 
-    ax5.set_title("Velocity Correlation")
-    ls, velcorr = plotter.velocity_correlation(config, data)
-    ax5.set_xlabel("l")
-    ax5.set_ylabel(r"$< v(t=k), v(t=k+l) >$")
-    ax5.axhline(y=0, dashes=(5, 2), color="grey", lw=0.8)
-    ax5.plot(ls, velcorr)
+    #  ax5.set_title("Velocity Correlation")
+    #  ls, velcorr = plotter.velocity_correlation(config, data)
+    #  ax5.set_xlabel("l")
+    #  ax5.set_ylabel(r"$< v(t=k), v(t=k+l) >$")
+    #  ax5.axhline(y=0, dashes=(5, 2), color="grey", lw=0.8)
+    #  ax5.plot(ls, velcorr)
 
     plt.tight_layout()
     plt.show()
