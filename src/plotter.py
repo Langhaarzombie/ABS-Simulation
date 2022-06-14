@@ -203,5 +203,5 @@ def velocity_correlation(config, data):
                 dots += np.dot([vkx, vky, vkz], [vklx, vkly, vklz]) / ks[-1]
             s += dots
         cll = np.append(cll, s / config["count"])
-    return ls[:-2], cll[:-2]
+    return ls[:-2], cll[:-2] / cll[0]
 
