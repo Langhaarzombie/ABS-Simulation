@@ -3,7 +3,7 @@ from numba import njit
 from src.sphere import Sphere
 from src.writer import Writer
 
-def random(count, density, temperature, dt, save_file):
+def random(config):
     """
     Initialize spheres for simulation with random distribution.
 
@@ -14,16 +14,8 @@ def random(count, density, temperature, dt, save_file):
 
     Parameters:
     -----------
-    count: int
-        Number of spheres to be created.
-    density: float64
-        Target density of simulated system.
-    temperature:
-        Temperature of the simulated system.
-    dt: float32
-        Size of timestep in simulation.
-    save_file: str
-        Filename to save init to.
+    config: dict
+        Config read from yaml config file.
 
     Returns:
     --------
@@ -31,16 +23,16 @@ def random(count, density, temperature, dt, save_file):
         Array of ABS for simulation.
     """
     # Create lattice and generate spheres
-    bounds = np.cbrt(count/density)
-    spheres, mean_vel, mean_vel2 = generate_spheres(bounds, count)
+    bounds = np.cbrt(config["count"]/config["density"])
+    spheres, mean_vel, mean_vel2 = generate_spheres(bounds, config["count"])
 
     # Readjust velocities acc. to temp and total_momentum = 0
-    temp_fac = np.sqrt(3*temperature/mean_vel2)
+    temp_fac = np.sqrt(3*config["temperature"]/mean_vel2)
     for s in spheres:
         s.velocity = (s.velocity - mean_vel) * temp_fac
 
     # Save init to file
-    saviour = Writer(save_file, ["position", "velocity", "active_acceleration", "bounds"])
+    saviour = Writer(config, ["position", "velocity", "active_acceleration", "bounds"])
     saviour.write(spheres)
     saviour.close_file()
 

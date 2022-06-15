@@ -1,5 +1,5 @@
 abs:
-  count: 10
+  count: 32
   density: 0.8
   timestep: 0.001
   steps: 1000
@@ -8,8 +8,11 @@ abs:
   init:
     save_file: "abs_init.csv"
   run:
-    save_file: "abs_simulation.csv"
-    observables:
+    files:
+      - "abs_simulation.csv"
+      - "abs_positions.xyz"
+    write_skips: 2
+    csv_observables:
       position: 1
       velocity: 1
       potential_energy: 1

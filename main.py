@@ -26,10 +26,10 @@ def run(config, init_file):
         config["count"] = len(spheres)
         config["bounds"] = np.cbrt(len(spheres) / config["density"])
     else:
-        spheres, config["bounds"] = initialize.random(count=config["count"], density=config["density"], temperature=config["temperature"], dt=config["timestep"], save_file=config["init"]["save_file"])
+        spheres, config["bounds"] = initialize.random(config)
 
     # Run
-    saviour = Writer.from_config(config["run"])
+    saviour = Writer.from_config(config)
     for i in np.arange(config["steps"]):
         spheres = simulation.step(spheres, config["bounds"], config["sigma"], config["temperature"], config["timestep"])
         saviour.write(spheres)
@@ -46,7 +46,7 @@ def show(config, data_file):
     config: dict
         Config of simulation.
     data_file:
-        Filename of simulation data.
+        Filename of csv simulation data.
     """
     data = np.genfromtxt(data_file, names=True)
     fig = plt.figure(figsize=(10, 5))
@@ -142,7 +142,7 @@ def _print_simulation_info(filename, config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--show", dest="show_file", action="store", default=None, help="show plots of simulation data in file (default: newly generate data)")
-    parser.add_argument("-i", "--init", dest="init_file", action="store", default=None, help="use init file for simulation (default: init randomly)")
+    parser.add_argument("-i", "--init", dest="init_file", action="store", default=None, help="use init file for simulation (default: init randomly on fcc)")
     parser.add_argument("-c", "--config", dest="config_file", action="store", default="abs_config.yml", help="path to config file (default: abs_config.yml)")
     args = vars(parser.parse_args())
 
@@ -151,6 +151,8 @@ if __name__ == "__main__":
 
     if not args["show_file"]:
         run(config, args["init_file"])
-        show(config, config["run"]["save_file"])
+        for f in config["run"]["files"]:
+            if f[-4:] == ".csv":
+                show(config, f)
     else:
         show(config, args["show_file"])

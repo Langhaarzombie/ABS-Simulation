@@ -24,7 +24,7 @@ def energy(config, data):
     total_energy: numpy.array of float64
         Total energy over time.
     """
-    ts = np.arange(config["steps"])
+    ts = np.arange(int(config["steps"]/config["run"]["write_skips"]))
     potential = np.array([])
     kinetic = np.array([])
     for i in ts:
@@ -38,7 +38,7 @@ def energy(config, data):
 
     print(f"(std / mean) of total energy: {np.std(total_energy) / np.mean(total_energy)}")
 
-    return ts, potential, kinetic, total_energy
+    return ts * config["run"]["write_skips"], potential, kinetic, total_energy
 
 def momentum(config, data):
     """
@@ -64,7 +64,7 @@ def momentum(config, data):
     momentum_z: numpy.array of float64
         Momentum of center of mass in z direction.
     """
-    ts = np.arange(config["steps"])
+    ts = np.arange(int(config["steps"]/config["run"]["write_skips"]))
     momentum_x = np.array([])
     momentum_y = np.array([])
     momentum_z = np.array([])
@@ -73,7 +73,7 @@ def momentum(config, data):
         momentum_x = np.append(momentum_x, np.sum(data[istart:istart + config["count"]]["vx"]))
         momentum_y = np.append(momentum_y, np.sum(data[istart:istart + config["count"]]["vy"]))
         momentum_z = np.append(momentum_z, np.sum(data[istart:istart + config["count"]]["vz"]))
-    return ts, momentum_x, momentum_y, momentum_z
+    return ts * config["run"]["write_skips"], momentum_x, momentum_y, momentum_z
 
 def temperature(config, data):
     """
@@ -92,15 +92,15 @@ def temperature(config, data):
     temp: numpy.array of float64
         Temperature of simulated system.
     """
-    ts = np.arange(config["steps"])
+    ts = np.arange(int(config["steps"]/config["run"]["write_skips"]))
     temps = np.array([])
     for i in ts:
         istart = config["count"] * i
         temp = np.sum(data[istart:istart + config["count"]]["temp"])
         temps = np.append(temps, temp)
-    start = int(config["steps"] / 50)
+    start = int(config["steps"] / (50 * config["run"]["write_skips"]))
     print(f"Average temperature {np.sum(temps[start:]) / (len(temps) - start)}")
-    return ts, temps
+    return ts * config["run"]["write_skips"], temps
 
 def radial_distribution(config, data, bin_count=1000):
     """
@@ -126,10 +126,10 @@ def radial_distribution(config, data, bin_count=1000):
     """
     b = np.cbrt(config["count"] / config["density"])
     g = np.zeros(bin_count)
-    for i in np.arange(config["steps"]):
+    for i in np.arange(int(config["steps"]/config["run"]["write_skips"])):
         istart = config["count"] * i
         spheres = data[istart:istart + config["count"]]
-        g += _rad_distr(spheres, b, bin_count) / config["steps"]
+        g += _rad_distr(spheres, b, bin_count) / (config["steps"] / config["run"]["write_skips"])
     return np.linspace(0, b/2, bin_count, endpoint=True), g
 
 @njit
@@ -187,7 +187,7 @@ def velocity_correlation(config, data):
         Average velocity correlations over time.
     """
     cll = np.array([])
-    ls = np.arange(int(config["steps"] / 20))
+    ls = np.arange(int(config["steps"] / (20 * config["run"]["write_skips"])))
     for l in ls:
         s = 0
         ks = np.arange(ls[-1] - l)
@@ -203,5 +203,5 @@ def velocity_correlation(config, data):
                 dots += np.dot([vkx, vky, vkz], [vklx, vkly, vklz]) / ks[-1]
             s += dots
         cll = np.append(cll, s / config["count"])
-    return ls[:-2], cll[:-2] / cll[0]
+    return ls[:-2] * config["run"]["write_skips"], cll[:-2] / cll[0]
 

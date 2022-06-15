@@ -6,14 +6,14 @@ class Writer:
     Writes save data of simulation to given file.
 
     Extracts given observables of ABS in simulation
-    and writes them to a given save file.
+    and writes them to given save files.
 
     Attributes:
     -----------
-    file: _io.TextIOWrapper
+    filenames: numpy.array of str
         Save file to write to.
-    observables: numpy.array of str
-        Observables of simulation to save.
+    csv_observables: numpy.array of str
+        Observables of simulation to save to csv file.
     header_names:
         Array to map attribute names and observables to headers in csv.
     """
@@ -28,10 +28,15 @@ class Writer:
         "velocity_correlation": "velcor"
     }
 
-    def __init__(self, filename, observables):
-        self.file = open(filename, "w")
-        self.observables = observables
-        print(self.get_header(), end="\n", file=self.file)
+    def __init__(self, config, csv_observables):
+        self.csv_observables = csv_observables
+        self.skip = config["run"]["write_skips"]
+        self.counter = self.skip
+        self.files = np.array([])
+        for f in config["run"]["files"]:
+            newfile = open(f, "w")
+            self.write_header(config, newfile)
+            self.files = np.append(self.files, newfile)
 
     @classmethod
     def from_config(cls, config):
@@ -47,40 +52,110 @@ class Writer:
         Writer
             Writer object to save data with.
         """
-        filename = config["save_file"]
         # TODO implement that writer considers how often to calc observables
-        observables = [*config["observables"].keys()]
-        return cls(filename, observables)
+        observables = [*config["run"]["csv_observables"].keys()]
+        return cls(config, observables)
 
     def close_file(self):
         """
-        Close the file the simulation is stored in.
+        Close the files the simulation is stored in.
 
         Parameters:
         -----------
         file: _io.TextIOWrapper
             Opened file.
         """
-        self.file.close()
+        for f in self.files:
+            f.close()
 
     def write(self, spheres):
         """
-        Write data of simulation step to save file.
+        Write data of simulation to specified file and format
+        if the skip counter allows it.
 
         Parameters:
         -----------
-        file: _io.TextIOWrapper
-            Opened file.
         spheres: numpy.array of Spheres
             Array of ABS in simulation.
         """
+        if self.counter == self.skip:
+            self.counter = 1
+            for f in self.files:
+                if f.name[-4:] == ".csv":
+                    self.write_csv(spheres, f)
+                elif f.name[-4:] == ".xyz":
+                    self.write_xyz(spheres, f)
+        else:
+            self.counter += 1
+
+    def write_xyz(self, spheres, file):
+        """
+        Write XYZ data of simulation step to save file.
+
+        Parameters:
+        -----------
+        spheres: numpy.array of Spheres
+            Array of ABS in simulation.
+        file: _io.TextIOWrapper
+            Openend csv file to write to.
+        """
+        for i, s in enumerate(spheres):
+            data_line = f"s{i}\t" + self.get_observable(spheres, s, "position") + "\t"
+            print(data_line, end="\n", file=file)
+
+    def write_csv(self, spheres, file):
+        """
+        Write CSV data of simulation step to save file.
+
+        Parameters:
+        -----------
+        spheres: numpy.array of Spheres
+            Array of ABS in simulation.
+        file: _io.TextIOWrapper
+            Openend csv file to write to.
+        """
         for s in spheres:
             data_line = ""
-            for o in self.observables:
+            for o in self.csv_observables:
                 data_line += self.get_observable(spheres, s, o) + "\t"
-            print(data_line, end="\n", file=self.file)
+            print(data_line, end="\n", file=file)
 
-    def get_header(self):
+    def write_header(self, config, file):
+        """
+        Write header for specified file to file.
+
+        Parameters:
+        -----------
+        config: dict
+            Config of simulation.
+        file: _io.TextIOWrapper
+            Openend csv file to write to.
+        """
+        if file.name[-4:] == ".csv":
+            print(self.get_csv_header(config), end="\n", file=file)
+        elif file.name[-4:] == ".xyz":
+            print(self.get_xyz_header(config), end="\n", file=file)
+
+    def get_xyz_header(self, config):
+        """
+        Get header string to print at top of xyz file.
+
+        Builds the string that will be printed at the
+        top of the xyz file. Includes the count of spheres
+        and information about the simulations config.
+
+        Parameters:
+        -----------
+        config: dict
+            Config of simulation.
+        Returns:
+        --------
+        str
+            Header string for xyz file.
+        """
+        return str(config["count"]) + "\nDensity: " + str(config["density"]) + ", Temperature: " + str(config["temperature"]) + ", Steps: " + str(config["steps"])
+
+    def get_csv_header(self, config):
         """
         Get header string to print at top of csv file.
 
@@ -98,7 +173,7 @@ class Writer:
             If an observable is not defined.
         """
         header = ""
-        for o in self.observables:
+        for o in self.csv_observables:
             try:
                 header += Writer.header_names[o] + "\t"
             except KeyError:
