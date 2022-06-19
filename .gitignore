@@ -3,6 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,windows,linux,macos
 
 ### Project Specific ###
+*.xyz
 *.csv
 *.yml
 *.yaml
