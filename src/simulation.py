@@ -32,7 +32,7 @@ def calculate_forces(positions, boundary, sigma, dt):
 
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
-    ecut = 2*s6*(s6**2/cut_off**6 - 1/cut_off**3)
+    ecut = 2*(s6**2/cut_off**6 - s6/cut_off**3)
 
     for i in np.arange(len(positions)):
         # Loop over unique pairs
