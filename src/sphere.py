@@ -34,6 +34,8 @@ class Sphere:
         self.acceleration  = np.zeros(3)
         self.potential_energy = 0
 
+        self.nearest_neighbours = np.array([])
+
     @property
     def position(self):
         return self._position
@@ -61,6 +63,9 @@ class Sphere:
 
         self._position = np.array([x, y, z])
 
+    @property
+    def average_nearest_neighbour(self):
+        return np.mean(np.sort(np.sqrt(self.nearest_neighbours))[1:5])
 
     def kinetic_energy(self):
         """

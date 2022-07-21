@@ -29,6 +29,7 @@ def calculate_forces(positions, boundary, sigma, dt):
     """
     forces = np.zeros_like(positions)
     pot_ens = np.zeros(len(positions))
+    distances = np.zeros((len(positions), len(positions)))
 
     cut_off = (2**(1/6)*sigma)**2 # Cutoff distance for potential
     s6 = sigma**6
@@ -42,6 +43,9 @@ def calculate_forces(positions, boundary, sigma, dt):
             dist = positions[i] - positions[j]
             dist = dist - boundary * np.rint(dist/boundary) # periodic bonudaries
             r2 = np.dot(dist, dist)
+            # Add distance of particles to distances array
+            distances[i,j] = r2
+            distances[j,i] = r2
             if r2 < cut_off:
                 # Calculate acting force, Lennard Jones potential
                 r2d = 1/r2
@@ -53,7 +57,7 @@ def calculate_forces(positions, boundary, sigma, dt):
                 pot_ens[j] += 2*r6d*s6*(r6d*s6-1) - ecut
         forces[i] = forces_i
         pot_ens[i] = pot_ens_i
-    return forces, pot_ens
+    return forces, pot_ens, distances
 
 def step(spheres, boundary, sigma, temperature, dt):
     """
@@ -85,24 +89,25 @@ def step(spheres, boundary, sigma, temperature, dt):
     sig = np.sqrt(2*temperature*gamma)
 
     # Active force components
-    tau = 1
-    U0 = 20
+    tau = 10
+    U0 = 11
 
     etas = np.random.normal(loc=0, size=(len(spheres), 3))
     xis = np.random.normal(loc=0, size=(len(spheres), 3))
     for i, s in enumerate(spheres):
         # v(t + dt/2)
-        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, s.active_acceleration, sig, gamma, etas[i], xis[i])
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, gamma*U0*s.active_acceleration, sig, gamma, etas[i], xis[i])
         # x(t + dt)
         s.position += s.velocity*dt + dt**(3/2)*sig*etas[i]/(2*np.sqrt(3))
 
     # forces
     locs = _get_positions(spheres)
-    fs, pot_ens = calculate_forces(locs, boundary, sigma, dt)
+    fs, pot_ens, dist = calculate_forces(locs, boundary, sigma, dt)
 
     # v(t + dt)
     omegas = np.random.normal(loc=0, scale=np.sqrt(2/tau), size=(len(spheres), 3))
     for i, s in enumerate(spheres):
+        s.nearest_neighbours = dist[i]
         s.acceleration = fs[i]
         s.potential_energy = pot_ens[i]
 
@@ -110,7 +115,7 @@ def step(spheres, boundary, sigma, temperature, dt):
         s.active_acceleration += dt*np.cross(omegas[i], s.active_acceleration)
         s.active_acceleration = s.active_acceleration / np.linalg.norm(s.active_acceleration) # rescale for unit vector
 
-        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, s.active_acceleration, sig, gamma, etas[i], xis[i])
+        s.velocity = _v_half_step(s.velocity, dt, s.acceleration, gamma*U0*s.active_acceleration, sig, gamma, etas[i], xis[i])
 
     return spheres
 

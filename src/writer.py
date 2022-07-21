@@ -25,7 +25,8 @@ class Writer:
         "active_acceleration": "ax\tay\taz",
         "temperature": "temp",
         "bounds": "b",
-        "velocity_correlation": "velcor"
+        "velocity_correlation": "velcor",
+        "nearest_neighbours": "nn"
     }
 
     def __init__(self, config, csv_observables):
@@ -221,5 +222,7 @@ class Writer:
             return f"{sphere.bounds}"
         elif observable == "velocity_correlation":
             return f"{np.dot(sphere.init_velocity, sphere.velocity) / (np.linalg.norm(sphere.init_velocity) * np.linalg.norm(sphere.velocity))}"
+        elif observable == "nearest_neighbours":
+            return f"{sphere.average_nearest_neighbour}"
         else:
             raise KeyError(f"Undefined observable requested: {observable}")
