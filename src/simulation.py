@@ -85,7 +85,7 @@ def step(spheres, boundary, sigma, temperature, dt):
         Updated array of ABS for simulation.
     """
     # Velocity Verlet with Langevin thermostat for updating positions
-    gamma = 0.355
+    gamma = 0.28
     sig = np.sqrt(2*temperature*gamma)
 
     # Active force components
