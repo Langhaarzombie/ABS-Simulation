@@ -102,33 +102,6 @@ def temperature(config, data):
     print(f"Average temperature {np.sum(temps[start:]) / (len(temps) - start)}")
     return ts * config["run"]["write_skips"], temps
 
-def temperature2(config, data):
-    """
-    Get the reduced temperature over time (attemp to correct results).
-
-    Parameters:
-    -----------
-    config: dict
-        Config of simulation.
-    data: 2d numpy.ndarray of float64
-        CSV data of simulation.
-    Returns:
-    --------
-    ts: numpy.array of int
-        Timesteps in simulation.
-    temp: numpy.array of float64
-        Temperature of simulated system.
-    """
-    ts = np.arange(int(config["steps"]/config["run"]["write_skips"]))[::10] # kind of decorrelated
-    temps = np.zeros(len(ts))
-    for i, time in enumerate(ts):
-        istart = config["count"] * time
-        vx2 = data[istart:istart + config["count"]]["vx"]**2
-        vy2 = data[istart:istart + config["count"]]["vy"]**2
-        vz2 = data[istart:istart + config["count"]]["vz"]**2
-        temps[i] = np.mean(vx2 + vy2 + vz2) / (3 * config["count"])
-    return ts * config["run"]["write_skips"], temps
-
 def radial_distribution(config, data, bin_count=1000):
     """
     Get radial distribution of spheres averaged over simulation time.
