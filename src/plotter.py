@@ -129,10 +129,10 @@ def radial_distribution(config, data, bin_count=1000):
     for i in np.arange(int(config["steps"]/config["run"]["write_skips"])):
         istart = config["count"] * i
         spheres = data[istart:istart + config["count"]]
-        g += _rad_distr(spheres, b, bin_count) / (config["steps"] / config["run"]["write_skips"])
+        g += _rad_distr(spheres, b, bin_count) / (config["steps"] / (config["run"]["write_skips"] * 10))
     return np.linspace(0, b/2, bin_count, endpoint=True), g
 
-@njit
+#  @njit
 def _rad_distr(spheres, bounds, binn):
     """
     Calculate radial distribution for one timestep.
@@ -153,10 +153,11 @@ def _rad_distr(spheres, bounds, binn):
     bcut = bounds / 2
     bins = bounds / (2*binn)
     g = np.zeros(binn)
-    for i in np.arange(len(spheres)):
-        xi = np.array([spheres[i]["x"], spheres[i]["y"], spheres[i]["z"]])
+    for i in np.arange(len(spheres))[::10]:
+    #  for i in np.arange(len(spheres)):
+        xi = np.array([spheres[i]["x"], spheres[i]["y"], spheres[i]["z"]]).flatten()
         for j in np.arange(i+1, len(spheres)):
-            xj = np.array([spheres[j]["x"], spheres[j]["y"], spheres[j]["z"]])
+            xj = np.array([spheres[j]["x"], spheres[j]["y"], spheres[j]["z"]]).flatten()
             dist = xi - xj
             dist = dist - bounds * np.rint(dist/bounds)
             r = np.sqrt(np.dot(dist, dist))

@@ -86,11 +86,13 @@ def step(spheres, boundary, sigma, temperature, dt):
     """
     # Velocity Verlet with Langevin thermostat for updating positions
     gamma = 0.28
+    gamma = 0
     sig = np.sqrt(2*temperature*gamma)
 
     # Active force components
-    tau = 10
-    U0 = 11
+    tau = 2
+    #  U0 = 10000
+    U0 = 1000
 
     etas = np.random.normal(loc=0, size=(len(spheres), 3))
     xis = np.random.normal(loc=0, size=(len(spheres), 3))
@@ -106,22 +108,36 @@ def step(spheres, boundary, sigma, temperature, dt):
 
     # v(t + dt)
     omegas = np.random.normal(loc=0, scale=np.sqrt(2/tau), size=(len(spheres), 3))
+    AA = np.zeros(3)
     for i, s in enumerate(spheres):
         s.nearest_neighbours = dist[i]
         s.acceleration = fs[i]
         s.potential_energy = pot_ens[i]
 
         # q(t + dt) active force
+        te = s.active_acceleration
         s.active_acceleration += dt*np.cross(omegas[i], s.active_acceleration)
         s.active_acceleration = s.active_acceleration / np.linalg.norm(s.active_acceleration) # rescale for unit vector
 
+        AA += gamma*U0*s.active_acceleration
+        #  print(s.active_acceleration)
+
         s.velocity = _v_half_step(s.velocity, dt, s.acceleration, gamma*U0*s.active_acceleration, sig, gamma, etas[i], xis[i])
 
+    #  print(AA / len(spheres))
+    #  print("=+=+=+=+=")
     return spheres
 
 def _v_half_step(v, dt, a, a_active, sig, gamma, eta, xi):
+    #  vv = v + 0.5*dt*a
+    #  ac = 0.5*dt*a_active
+    #  la = -0.5*dt*gamma*v
+    #  la += 0.5*np.sqrt(dt)*sig*xi
+    #  la -= 0.125*dt**2*gamma*(a-gamma*v)
+    #  la -= 0.25*dt**(3/2)*gamma*sig*(0.5*xi+eta/np.sqrt(3))
+    #  return vv + ac + la
     res = v + 0.5*dt*a
-    res += 0.5*dt*a_active
+    res += 0.5*dt*a_active*0
     res -= 0.5*dt*gamma*v
     res += 0.5*np.sqrt(dt)*sig*xi
     res -= 0.125*dt**2*gamma*(a-gamma*v)
